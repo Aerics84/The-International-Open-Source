@@ -146,8 +146,8 @@ export class CombatRequestManager {
         }
 
         for (const enemyCreep of requestRoom.enemyAttackers) {
-            if (enemyCreep.combatStrength.ranged > request.data[CombatRequestData.minHeal] * 4)
-                request.data[CombatRequestData.minHeal] = enemyCreep.combatStrength.ranged + 1
+            if (enemyCreep.combatStrength.ranged > request.data[CombatRequestData.minRangedHeal] * 4)
+                request.data[CombatRequestData.minRangedHeal] = enemyCreep.combatStrength.ranged + 1
 
             if (
                 enemyCreep.combatStrength.heal >

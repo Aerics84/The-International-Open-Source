@@ -699,8 +699,7 @@ Room.prototype.scoutEnemyRoom = function () {
     // Combat request creation
 
     this.createAttackCombatRequest({
-        minHeal:
-            10 + ((this.structures.tower.filter(tower => tower.RCLActionable).length * TOWER_POWER_ATTACK) / 4) * 1.1,
+        maxTowerDamage: Math.ceil((this.structures.tower.filter(tower => tower.RCLActionable).length * TOWER_POWER_ATTACK) * 1.1),
         minDamage: 50,
     })
 
@@ -982,7 +981,8 @@ Room.prototype.createAttackCombatRequest = function (opts) {
     }
 
     request.data[CombatRequestData.minDamage] = 10
-    request.data[CombatRequestData.minHeal] = 10
+    request.data[CombatRequestData.minMeleeHeal] = 10
+    request.data[CombatRequestData.minRangedHeal] = 10
     request.data[CombatRequestData.quadCount] = 1
 
     if (opts) {
@@ -1022,7 +1022,8 @@ Room.prototype.createHarassCombatRequest = function (opts) {
 
     request.data[CombatRequestData.attack] = 3
     request.data[CombatRequestData.minDamage] = 40
-    request.data[CombatRequestData.minHeal] = 10
+    request.data[CombatRequestData.minMeleeHeal] = 10
+    request.data[CombatRequestData.minRangedHeal] = 10
 
     if (opts) {
         for (const key in opts) {
@@ -1075,7 +1076,8 @@ Room.prototype.createDefendCombatRequest = function (opts) {
     }
 
     request.data[CombatRequestData.minDamage] = 40
-    request.data[CombatRequestData.minHeal] = 10
+    request.data[CombatRequestData.minMeleeHeal] = 10
+    request.data[CombatRequestData.minRangedHeal] = 10
 }
 
 Room.prototype.distanceTransform = function (
