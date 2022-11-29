@@ -57,6 +57,7 @@ export class TradeManager {
 
         if (!terminal) return
         if (!terminal.RCLActionable) return
+        if (room.enemyCreeps.length > 0) return
 
         this.createAllyRequests()
 
