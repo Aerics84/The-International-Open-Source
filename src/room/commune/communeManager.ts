@@ -248,20 +248,14 @@ export class CommuneManager {
      * Finds how expensive it will be to provide enough heal parts to withstand a melee attack
      */
     public findMinMeleeHealCost(minHeal: number = 0) {
-        return (
-            minHeal / HEAL_POWER * BODYPART_COST[HEAL] +
-            minHeal / HEAL_POWER * BODYPART_COST[MOVE]
-        )
+        return (minHeal / HEAL_POWER) * BODYPART_COST[HEAL] + (minHeal / HEAL_POWER) * BODYPART_COST[MOVE]
     }
 
     /**
      * Finds how expensive it will be to provide enough heal parts to withstand a ranged attack
      */
     public findMinRangedHealCost(minHeal: number = 0) {
-        return (
-            minHeal / HEAL_POWER * BODYPART_COST[HEAL] +
-            minHeal / HEAL_POWER * BODYPART_COST[MOVE]
-        )
+        return (minHeal / HEAL_POWER) * BODYPART_COST[HEAL] + (minHeal / HEAL_POWER) * BODYPART_COST[MOVE]
     }
 
     public findMinDismantleCost(minDismantle: number = 0) {
@@ -287,7 +281,7 @@ export class CommuneManager {
         const level = this.room.controller.level
 
         return Math.min(
-            Math.floor(Math.pow((level - 3) * 10, 4.5) + 20000 + this.room.memory.AT * Math.pow(level, 1.8) * 10),
+            Math.floor(Math.pow((level - 3) * 10, 4.75) + 20000 + this.room.memory.AT * Math.pow(level, 1.8) * 10),
             RAMPART_HITS_MAX[level],
         )
     }
