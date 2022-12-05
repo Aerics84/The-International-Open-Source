@@ -176,7 +176,7 @@ export class Hauler extends Creep {
 
             const creep: Hauler = Game.creeps[creepName]
 
-            creep.advancedRenew()
+            creep.passiveRenew()
 
             creep.haul()
         }

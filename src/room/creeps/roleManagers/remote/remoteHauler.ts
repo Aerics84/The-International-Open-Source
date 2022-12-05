@@ -329,7 +329,7 @@ export class RemoteHauler extends Creep {
         if (this.room.name === this.commune.name) {
             // Try to renew the creep
 
-            this.advancedRenew()
+            this.passiveRenew()
 
             const storingStructure = this.room.storage || this.room.terminal
 

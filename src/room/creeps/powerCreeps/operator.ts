@@ -7,7 +7,6 @@ export class Operator extends PowerCreep {
     }
 
     preTickManager() {
-
         this.avoidEnemyThreatCoords()
     }
 
@@ -37,11 +36,11 @@ export class Operator extends PowerCreep {
 
         if (!this.room.powerSpawn) return false
 
-        this.memory.TN = 'advancedRenew'
+        this.memory.TN = 'passiveRenew'
         return true
     }
 
-    advancedRenew?() {
+    passiveRenew?() {
         const powerSpawn = this.room.powerSpawn
         if (!powerSpawn) return ERROR_FAILED
 

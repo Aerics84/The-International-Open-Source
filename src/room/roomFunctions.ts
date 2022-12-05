@@ -981,10 +981,12 @@ Room.prototype.createAttackCombatRequest = function (opts) {
         data: [0],
     }
 
+    for (const key in CombatRequestData) request.data[key] = 0
+
     request.data[CombatRequestData.minDamage] = 10
     request.data[CombatRequestData.minMeleeHeal] = 10
     request.data[CombatRequestData.minRangedHeal] = 10
-    request.data[CombatRequestData.quadCount] = 1
+    request.data[CombatRequestData.quadQuota] = 1
 
     if (opts) {
         for (const key in opts) {
@@ -1020,6 +1022,8 @@ Room.prototype.createHarassCombatRequest = function (opts) {
         T: 'harass',
         data: [0],
     }
+
+    for (const key in CombatRequestData) request.data[key] = 0
 
     request.data[CombatRequestData.attack] = 3
     request.data[CombatRequestData.minDamage] = 40
@@ -1064,6 +1068,8 @@ Room.prototype.createDefendCombatRequest = function (opts) {
         T: 'defend',
         data: [0],
     }
+
+    for (const key in CombatRequestData) request.data[key] = 0
 
     request.data[CombatRequestData.inactionTimer] = 0
     request.data[CombatRequestData.inactionTimerMax] = randomRange(5000, 5000 + Math.floor(Math.random() * 5000))
