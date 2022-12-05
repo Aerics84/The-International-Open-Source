@@ -459,7 +459,7 @@ export class LabManager {
             )
         }
         for (let compound in this.targetCompounds) {
-            console.log('updateDeficits ' + this.communeManager.room.name + ': ' + compound)
+            //console.log('updateDeficits ' + this.communeManager.room.name + ': ' + compound)
             var amount = Math.max(0, this.targetCompounds[compound as MineralConstant | MineralCompoundConstant]) // this.communeManager.roomai.trading.maxStorageAmount(compound))
 
             this.chainDecompose(compound as MineralConstant | MineralCompoundConstant, amount)
@@ -532,7 +532,7 @@ export class LabManager {
     ): { type: MineralCompoundConstant; amount: number } {
         let nextReaction = target
         let missing = _.filter(decompose(nextReaction), r => this.amount(r) < LAB_REACTION_AMOUNT)
-        console.log(targetAmount + ':' + target + ' missing: ' + JSON.stringify(missing))
+        //console.log(targetAmount + ':' + target + ' missing: ' + JSON.stringify(missing))
         if (missing.length === 0) return { type: target as MineralCompoundConstant, amount: targetAmount }
 
         // filter uncookable resources (e.g. H). Can't get those using reactions.

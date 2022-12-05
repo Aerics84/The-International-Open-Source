@@ -57,6 +57,7 @@ export class TradeManager {
 
         if (!terminal) return
         if (!terminal.RCLActionable) return
+        if (room.enemyCreeps.length > 0) return
 
         this.createAllyRequests()
 
@@ -247,6 +248,7 @@ export class TradeManager {
 
         for (const resourceTarget of terminalResourceTargets) {
             if (resourceTarget.conditions && !resourceTarget.conditions(this.communeManager)) continue
+            if (resourceTarget.resource === RESOURCE_ENERGY) continue
 
             let min = terminal.store.getCapacity() * resourceTarget.min
 
