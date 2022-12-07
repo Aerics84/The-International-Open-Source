@@ -193,7 +193,6 @@ global.combat = function (requestName, type, opts, communeName) {
     if (!Memory.combatRequests[requestName]) {
         const request = Memory.combatRequests[requestName] = {
             T: type || 'attack',
-            responder: communeName,
             data: [0],
         }
 
@@ -214,6 +213,7 @@ global.combat = function (requestName, type, opts, communeName) {
         const roomMemory = Memory.rooms[communeName]
         if (!roomMemory) return `No memory for ${communeName}`
 
+        request.responder = communeName
         roomMemory.combatRequests.push(requestName)
     }
 

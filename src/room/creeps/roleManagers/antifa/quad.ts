@@ -131,7 +131,10 @@ export class Quad {
     }
 
     get canMove() {
-        for (const member of this.members) if (!member.canMove) return false
+        for (const member of this.members) {
+
+            if (!member.canMove) return false
+        }
         return true
     }
 
@@ -157,7 +160,7 @@ export class Quad {
 
         this.sortMembersByCoord()
 
-        Memory.combatRequests[this.leader.memory.CRN].data[CombatRequestData.quads] += 1
+        if (Memory.combatRequests[this.leader.memory.CRN]) Memory.combatRequests[this.leader.memory.CRN].data[CombatRequestData.quads] += 1
     }
 
     sortMembersByCoord() {
@@ -188,9 +191,9 @@ export class Quad {
     run() {
         this.leader.say(this.type)
 
-        if (this.runCombatRoom()) return
-
         this.passiveHealQuad()
+
+        if (this.runCombatRoom()) return
 
         if (!this.getInFormation()) {
             this.passiveRangedAttack()
@@ -199,7 +202,7 @@ export class Quad {
 
         this.leader.say('IF')
 
-        if (this.leader.room.enemyDamageThreat && this.runCombat()) return
+        /* if (this.leader.room.enemyDamageThreat && this.runCombat()) return */
 
         this.passiveRangedAttack()
 
@@ -382,6 +385,19 @@ export class Quad {
 
     createMoveRequest(opts: MoveRequestOpts, moveLeader = this.leader) {
         if (!this.willMove) {
+
+            for (const member1 of this.members) {
+
+                if (!member1.fatigue) continue
+
+                for (const member2 of this.members) {
+
+                    if (member2.name === member1.name) continue
+
+                    member2.pull(member1)
+                }
+            }
+
             /* this.holdFormation() */
             return false
         }
