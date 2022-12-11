@@ -49,7 +49,7 @@ class TickConfig {
             const cpuUsed = Game.cpu.getUsed() - managerCPUStart
             customLog('Tick Config', cpuUsed.toFixed(2), {
                 textColor: myColors.white,
-                bgColor: myColors.lightBlue
+                bgColor: myColors.lightBlue,
             })
             const statName: InternationalStatNames = 'tccu'
             globalStatsUpdater('', statName, cpuUsed, true)
@@ -63,7 +63,6 @@ class TickConfig {
         // Chant logic
 
         if (Memory.doChant) {
-
             if (Memory.chantIndex === chant.length - 1) Memory.chantIndex = 0
             else Memory.chantIndex += 1
         }
@@ -193,7 +192,7 @@ class TickConfig {
             }
 
             const communeName = findClosestRoomName(roomName, communesForResponding)
-            if (!communeName) break
+            if (!communeName) continue
 
             // Run a more simple and less expensive check, then a more complex and expensive to confirm. If the check fails, abandon the room for some time
 
@@ -323,14 +322,19 @@ class TickConfig {
                 const minRangedAttackCost = room.communeManager.findMinRangedAttackCost(
                     request.data[CombatRequestData.minDamage],
                 )
-                const minMeleeHealCost = room.communeManager.findMinMeleeHealCost(request.data[CombatRequestData.minMeleeHeal] + (request.data[CombatRequestData.maxTowerDamage] || 0))
+                const minMeleeHealCost = room.communeManager.findMinMeleeHealCost(
+                    request.data[CombatRequestData.minMeleeHeal] +
+                        (request.data[CombatRequestData.maxTowerDamage] || 0),
+                )
                 const minRangedHealCost = room.communeManager.findMinRangedHealCost(
                     request.data[CombatRequestData.minRangedHeal],
                 )
 
                 if (minRangedAttackCost + minRangedHealCost > room.energyCapacityAvailable) continue
 
-                const minAttackCost = room.communeManager.findMinMeleeAttackCost(request.data[CombatRequestData.minDamage])
+                const minAttackCost = room.communeManager.findMinMeleeAttackCost(
+                    request.data[CombatRequestData.minDamage],
+                )
                 if (minAttackCost > room.energyCapacityAvailable) continue
 
                 communes.push(roomName)
