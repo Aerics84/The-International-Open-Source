@@ -3,10 +3,12 @@ import {
     createPosMap,
     customLog,
     findClosestObject,
+    findObjectWithID,
     getRange,
+    getRangeOfCoords,
     unpackNumAsCoord,
 } from 'international/utils'
-import { TradeManager } from './market/tradeManager'
+import { TerminalManager } from './terminal/terminalManager'
 import './spawning/spawnManager'
 
 import { constructionManager } from '../construction/constructionManager'
@@ -45,6 +47,8 @@ import { HaulerNeedManager } from './haulerNeedManager'
 import { packXYAsCoord, unpackCoord, unpackPosList } from 'other/packrat'
 
 export class CommuneManager {
+    // Managers
+
     combatManager: CombatManager
 
     towerManager: TowerManager
@@ -53,7 +57,7 @@ export class CommuneManager {
     spawnManager: SpawnManager
     sourceManager: SourceManager
 
-    tradeManager: TradeManager
+    terminalManager: TerminalManager
     remotesManager: RemotesManager
     haulerSizeManager: HaulerSizeManager
 
@@ -62,6 +66,8 @@ export class CommuneManager {
     allyCreepRequestManager: AllyCreepRequestManager
     haulRequestManager: HaulRequestManager
     haulerNeedManager: HaulerNeedManager
+
+    //
 
     //
 
@@ -74,7 +80,7 @@ export class CommuneManager {
         this.spawnManager = new SpawnManager(this)
         this.sourceManager = new SourceManager(this)
 
-        this.tradeManager = new TradeManager(this)
+        this.terminalManager = new TerminalManager(this)
         this.remotesManager = new RemotesManager(this)
         this.haulerSizeManager = new HaulerSizeManager(this)
 
@@ -107,7 +113,6 @@ export class CommuneManager {
 
         room.spawnRequests = []
         room.upgradeStrength = 0
-        room.haulerNeed = 0
 
         if (!room.memory.remotes) room.memory.remotes = []
 
@@ -122,6 +127,7 @@ export class CommuneManager {
 
         room.usedRampartIDs = new Set()
 
+        this.terminalManager.preTickRun()
         this.haulerSizeManager.preTickRun()
         this.remotesManager.preTickRun()
         this.haulRequestManager.preTickRun()
@@ -171,10 +177,10 @@ export class CommuneManager {
         this.combatManager.manageDefenceRequests()
 
         try {
-            this.tradeManager.run()
+            this.terminalManager.run()
         } catch (err) {
             customLog(
-                'Exception processing tradeManager in ' + this.room.name + '. ',
+                'Exception processing terminalManager in ' + this.room.name + '. ',
                 err + '\n' + (err as any).stack,
                 {
                     textColor: myColors.white,
@@ -260,6 +266,75 @@ export class CommuneManager {
 
     public findMinDismantleCost(minDismantle: number = 0) {
         return minDismantle * BODYPART_COST[WORK] + minDismantle * BODYPART_COST[MOVE]
+    }
+
+    inputLabIDs: Id<StructureLab>[]
+
+    _inputLabs: StructureLab[]
+
+    /**
+     * Finds the input labs we need to opperate production
+     */
+    public get inputLabs() {
+        this._inputLabs = []
+
+        // We need at least 3 labs to opperate
+
+        const labs = this.room.structures.lab
+        if (labs.length < 3) return this._inputLabs
+
+        // We need a storage or terminal
+
+        const storingStructure = this.room.terminal || this.room.storage
+        if (!storingStructure) return this._inputLabs
+
+        // Try to use cached lab IDs if valid
+
+        if (this.inputLabIDs && this.inputLabIDs.length >= 2) {
+            if (this.unpackLabIDsByType()) return this._inputLabs
+
+            // Reset labs in case any were added
+
+            this._inputLabs = []
+        }
+
+        // Reset lab IDs
+
+        this.inputLabIDs = []
+
+        // Prefer labs closer to the hub to be inputs
+
+        labs.sort((a, b) => {
+            return getRangeOfCoords(a.pos, storingStructure.pos) - getRangeOfCoords(b.pos, storingStructure.pos)
+        })
+
+        for (const lab of labs) {
+            // We have enough inputs
+
+            if (this._inputLabs.length >= 2) break
+
+            // Tzhe lab isn't in range of all labs
+
+            if (labs.filter(otherLab => getRangeOfCoords(lab.pos, otherLab.pos) <= 2).length < labs.length) continue
+
+            // Make the lab an input
+
+            this._inputLabs.push(lab)
+            this.inputLabIDs.push(lab.id)
+        }
+
+        return this._inputLabs
+    }
+
+    public unpackLabIDsByType() {
+        for (const ID of this.inputLabIDs) {
+            const lab = findObjectWithID(ID)
+            if (!lab) return false
+
+            this._inputLabs.push(lab)
+        }
+
+        return true
     }
 
     get storedEnergyUpgradeThreshold() {

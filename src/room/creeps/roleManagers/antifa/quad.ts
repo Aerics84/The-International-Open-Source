@@ -75,14 +75,14 @@ export class Quad {
 
         for (const enemyCreep of this.leader.room.enemyAttackers) {
             // We have sufficient superiority to ignore kiting this creep
-/*
+
             if (
                 this.combatStrength.heal + this.combatStrength.melee + this.combatStrength.ranged >
                 (enemyCreep.combatStrength.heal + enemyCreep.combatStrength.melee + enemyCreep.combatStrength.ranged) *
                     1.2
             )
                 continue
- */
+
             // Segregate by ranged
 
             if (enemyCreep.parts.ranged_attack) {
@@ -130,9 +130,43 @@ export class Quad {
         return this._enemyThreatCoords
     }
 
+    _enemyThreatGoals: PathGoal[]
+
+    get enemyThreatGoals() {
+        this._enemyThreatGoals = []
+
+        for (const enemyCreep of this.leader.room.enemyAttackers) {
+
+            // The enemy is weak enough to be ignored
+
+            if (
+                (enemyCreep.combatStrength.ranged + enemyCreep.combatStrength.melee + enemyCreep.combatStrength.heal) *
+                    1.2 <
+                this.combatStrength.ranged + this.combatStrength.melee + this.combatStrength.heal
+            )
+                continue
+
+            if (enemyCreep.parts.ranged_attack) {
+                this._enemyThreatGoals.push({
+                    pos: enemyCreep.pos,
+                    range: 5,
+                })
+                continue
+            }
+
+            if (!enemyCreep.parts.attack) continue
+
+            this._enemyThreatGoals.push({
+                pos: enemyCreep.pos,
+                range: 3,
+            })
+        }
+
+        return this._enemyThreatGoals
+    }
+
     get canMove() {
         for (const member of this.members) {
-
             if (!member.canMove) return false
         }
         return true
@@ -160,7 +194,8 @@ export class Quad {
 
         this.sortMembersByCoord()
 
-        if (Memory.combatRequests[this.leader.memory.CRN]) Memory.combatRequests[this.leader.memory.CRN].data[CombatRequestData.quads] += 1
+        if (Memory.combatRequests[this.leader.memory.CRN])
+            Memory.combatRequests[this.leader.memory.CRN].data[CombatRequestData.quads] += 1
     }
 
     sortMembersByCoord() {
@@ -202,7 +237,7 @@ export class Quad {
 
         this.leader.say('IF')
 
-        /* if (this.leader.room.enemyDamageThreat && this.runCombat()) return */
+        if (this.leader.room.enemyDamageThreat && this.runCombat()) return
 
         this.passiveRangedAttack()
 
@@ -248,7 +283,7 @@ export class Quad {
 
             const nearbyThreat = this.leader.room.enemyAttackers.find(
                 enemyCreep =>
-                    this.findMinRange(enemyCreep.pos) <= 3 &&
+                    this.findMinRange(enemyCreep.pos) <= 4 &&
                     (enemyCreep.combatStrength.ranged || enemyCreep.combatStrength.melee),
             )
             if (nearbyThreat) this.advancedTransform()
@@ -385,13 +420,10 @@ export class Quad {
 
     createMoveRequest(opts: MoveRequestOpts, moveLeader = this.leader) {
         if (!this.willMove) {
-
             for (const member1 of this.members) {
-
                 if (!member1.fatigue) continue
 
                 for (const member2 of this.members) {
-
                     if (member2.name === member1.name) continue
 
                     member2.pull(member1)
@@ -756,7 +788,7 @@ export class Quad {
         const range = this.findMinRange(enemyAttacker.pos)
 
         // If the squad is outmatched
-/*
+        /*
         if (
             this.combatStrength.heal + this.combatStrength.ranged <
             enemyAttacker.combatStrength.heal + enemyAttacker.combatStrength.ranged

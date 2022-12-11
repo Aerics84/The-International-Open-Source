@@ -10,6 +10,8 @@ export class HaulerNeedManager {
     run() {
         const { room } = this.communeManager
 
+        room.haulerNeed += 2
+
         for (let index in room.sources) {
             if (room.sourceLinks[index]) continue
 
@@ -19,7 +21,7 @@ export class HaulerNeedManager {
         if (!room.controllerLink)
             room.haulerNeed += findCarryPartsRequired(room.upgradePathLength, room.upgradeStrength)
 
-        room.haulerNeed += room.structures.lab.length / 3
+        room.haulerNeed += room.structures.lab.length / 1.2
 
         room.haulerNeed += Memory.stats.rooms[room.name].eosp / 50
 
