@@ -113,6 +113,7 @@ export class CommuneManager {
 
         room.spawnRequests = []
         room.upgradeStrength = 0
+        room.haulerNeed = 0
 
         if (!room.memory.remotes) room.memory.remotes = []
 
@@ -202,6 +203,7 @@ export class CommuneManager {
         this.labManager.run()
         this.powerSpawnManager.run()
         this.spawnManager.organizeSpawns()
+        this.spawnManager.createPowerTasks()
 
         this.room.roomManager.creepRoleManager.run()
         this.room.roomManager.powerCreepRoleManager.run()
@@ -215,6 +217,7 @@ export class CommuneManager {
     }
 
     private test() {
+
         return
 
         let CPUUsed = Game.cpu.getUsed()
