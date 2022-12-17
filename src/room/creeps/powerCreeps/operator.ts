@@ -1,4 +1,4 @@
-import { RESULT_FAIL, myColors, RESULT_NO_ACTION, RESULT_ACTION, RESULT_SUCCESS } from 'international/constants'
+import { RESULT_FAIL, customColors, RESULT_NO_ACTION, RESULT_ACTION, RESULT_SUCCESS } from 'international/constants'
 import { customLog, findObjectWithID, getRangeOfCoords } from 'international/utils'
 
 export class Operator extends PowerCreep {
@@ -7,7 +7,23 @@ export class Operator extends PowerCreep {
     }
 
     preTickManager() {
+        this.managePowerTask()
         this.avoidEnemyThreatCoords()
+    }
+
+    managePowerTask?() {
+        if (!this.memory.TTID) return
+
+        const taskTarget = findObjectWithID(this.memory.TTID)
+        if (!taskTarget) {
+            delete this.memory.TTID
+            return
+        }
+
+        // Don't have the taskTarget thinking it needs a new task
+
+        taskTarget.reservePowers
+        taskTarget._reservePowers.add(this.memory.PT)
     }
 
     endTickManager() {}
@@ -15,14 +31,12 @@ export class Operator extends PowerCreep {
     // Basic tasks
 
     runTask?() {
-
         if (!this.memory.TN && !this.findTask()) return RESULT_FAIL
 
         const taskResult = (this as any)[this.memory.TN]()
         if (!taskResult) return taskResult === RESULT_FAIL
 
         delete this.memory.TN
-
         return RESULT_SUCCESS
     }
 
@@ -125,20 +139,29 @@ export class Operator extends PowerCreep {
     // Complex power tasks
 
     findPowerTask?() {
+        if (this.memory.TTID) return findObjectWithID(this.memory.TTID)
 
-        if (this.memory.TTID) {
+        const task = this.findNewBestPowerTask()
+        if (!task) return RESULT_FAIL
 
-            const taskTarget = findObjectWithID(this.memory.TTID)
-            if (taskTarget) return taskTarget
+        customLog('FIND TASK', findObjectWithID(task.targetID))
 
-            delete this.memory.TTID
-        }
+        const taskTarget = findObjectWithID(task.targetID)
+        taskTarget.reservePowers
+        taskTarget._reservePowers.add(this.memory.PT)
 
+        this.memory.TTID = task.targetID
+        this.memory.PT = task.powerType
+        delete this.room.powerTasks[task.taskID]
+
+        return findObjectWithID(task.targetID)
+    }
+
+    findNewBestPowerTask?() {
         let lowestScore = Infinity
         let bestTask: PowerTask
 
         for (const ID in this.room.powerTasks) {
-
             const task = this.room.powerTasks[ID]
 
             // We don't have the requested power
@@ -148,52 +171,41 @@ export class Operator extends PowerCreep {
 
             // We don't have enough ops for the task
 
-            if ((POWER_INFO[task.powerType] as any).ops > this.store.ops) continue
+            if ((POWER_INFO[task.powerType] as any).ops > this.nextStore.ops) continue
 
             const taskTargetPos = findObjectWithID(task.targetID).pos
             const range = getRangeOfCoords(this.pos, taskTargetPos)
 
             // The target doesn't need us yet or we can't yet provide
 
-            if (Math.max(task.cooldown, power.cooldown) + 5 > range) continue
+            if (
+                Math.max(task.cooldown, this.powerCooldowns.get(task.powerType) || 0) >
+                range + (POWER_INFO[task.powerType] as any).range + 3
+            )
+                continue
 
-            let score = task.priority + (range / 100)
+            let score = task.priority + range / 100
 
             if (score >= lowestScore) continue
 
             lowestScore = score
             bestTask = task
         }
-        customLog('FIND TASK', bestTask)
-        if (!bestTask) return RESULT_FAIL
 
-        const taskTarget = findObjectWithID(bestTask.targetID)
-        this.memory.PT = bestTask.powerType
-        delete this.room.powerTasks[bestTask.taskID]
-
-        return taskTarget
-    }
-
-    runPowerTasks?() {
-
-        if (this.runPowerTask() === RESULT_SUCCESS) this.runPowerTask()
+        return bestTask
     }
 
     runPowerTask?() {
-
         const taskTarget = this.findPowerTask()
         if (!taskTarget) return RESULT_FAIL
 
-        taskTarget._reservePowers.add(this.memory.PT)
-
         // We aren't in range, get closer
-
+        customLog('TRY TASK', taskTarget)
         const minRange = (POWER_INFO[this.memory.PT] as any).range
         if (minRange && getRangeOfCoords(this.pos, taskTarget.pos) > minRange) {
-
             this.createMoveRequest({
                 origin: this.pos,
-                goals: [{ pos: taskTarget.pos, range: minRange, }]
+                goals: [{ pos: taskTarget.pos, range: minRange }],
             })
             return RESULT_ACTION
         }
@@ -204,12 +216,25 @@ export class Operator extends PowerCreep {
 
         const effect = taskTarget.effectsData.get(this.memory.PT)
         if (effect && effect.ticksRemaining > 0) return RESULT_FAIL
-        if (this.usePower(this.memory.PT, taskTarget) !== OK) return RESULT_FAIL
+        /* if (this.usePower(this.memory.PT, taskTarget) !== OK) return RESULT_FAIL */
+
+        this.usePower(this.memory.PT, taskTarget)
 
         // We did the power
+        customLog('WE DID THE POWA', taskTarget)
+
+        // Assume the power consumed ops if it does so
+
+        const ops = (POWER_INFO[this.memory.PT] as any).ops
+        if (ops) this.nextStore.ops -= ops
 
         this.powered = true
         delete this.memory.TTID
+
+        // Define the cooldown so we don't assume the creep can still do this power immediately
+
+        this.powerCooldowns
+        this._powerCooldowns.set(this.memory.PT, POWER_INFO[this.memory.PT].cooldown)
 
         return RESULT_SUCCESS
     }
@@ -223,8 +248,7 @@ export class Operator extends PowerCreep {
             const creep: Operator = Game.powerCreeps[creepName]
 
             if (creep.runTask()) continue
-            creep.runPowerTasks()
-            /* if (creep.runTask()) creep.runTask() */
+            if (creep.runPowerTask() === RESULT_SUCCESS) creep.runPowerTask()
         }
     }
 }

@@ -231,6 +231,10 @@ declare global {
          * Wether or not to attempt a cardinal flood
          */
         cardinalFlood?: boolean
+        /**
+         * The protection offset of the stamp
+         */
+        protectionOffset?: number
     }
 
     interface FindClosestPosOfValueOptsAsym extends FindClosestPosOfValueOpts {
@@ -591,6 +595,10 @@ declare global {
          * Total Creep Count
          */
         tcc: number
+        /**
+         * Power Creep Count
+         */
+        pcc: number
         /**
          * Spawn Usage as a decimal
          */
@@ -1474,6 +1482,10 @@ declare global {
 
         readonly unprotectedEnemyCreeps: Creep[]
 
+        _exitCoords: Set<string>
+
+        readonly exitCoords: Set<string>
+
         // Target finding
 
         _MEWT: (Creep | AnyStoreStructure | Tombstone | Ruin | Resource)[]
@@ -2231,6 +2243,10 @@ declare global {
          * Wether the creep has used a power this tick
          */
         powered: boolean
+
+        _powerCooldowns: Partial<Map<PowerConstant, number>>
+
+        readonly powerCooldowns: Partial<Map<PowerConstant, number>>
     }
 
     interface PowerCreepMemory extends CreepMemoryTemplate {
@@ -2258,7 +2274,7 @@ declare global {
     // Structures
 
     interface Structure {
-        estimatedHits: number
+        nextHits: number
 
         // Getters
 
@@ -2327,12 +2343,25 @@ declare global {
 
         readonly effectsData: Map<PowerConstant | EffectConstant, RoomObjectEffect>
 
-        _estimatedHits: number
+        _nextHits: number
 
-        estimatedHits: number
+        /**
+         * The estimated hits amount next tick
+         */
+        nextHits: number
+
+        _nextStore: Partial<StoreDefinition>
+
+        /**
+         * The estimated store values next tick
+         */
+        readonly nextStore: Partial<StoreDefinition>
 
         _reserveStore: Partial<StoreDefinition>
 
+        /**
+         * The store values including that reserved by tasks
+         */
         readonly reserveStore: Partial<StoreDefinition>
 
         _reservePowers: Set<PowerConstant>

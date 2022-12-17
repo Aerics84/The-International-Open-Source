@@ -1,4 +1,4 @@
-import { myColors, powerCreepClassNames } from 'international/constants'
+import { customColors, powerCreepClassNames } from 'international/constants'
 import { globalStatsUpdater } from 'international/statsManager'
 import { customLog } from 'international/utils'
 import { RoomManager } from 'room/roomManager'
@@ -30,14 +30,10 @@ export class PowerCreepRoleManager {
             const cpuUsed2 = this.roomManager.room.myCreepsAmount
                 ? (Game.cpu.getUsed() - managerCPUStart) / this.roomManager.room.myCreepsAmount
                 : 0
-            customLog(
-                'Power Role Manager',
-                `CPU: ${cpuUsed.toFixed(2)}, CPU Per Creep: ${cpuUsed2.toFixed(2)}`,
-                {
-                    textColor: myColors.white,
-                    bgColor: myColors.lightBlue
-                },
-            )
+            customLog('Power Role Manager', `CPU: ${cpuUsed.toFixed(2)}, CPU Per Creep: ${cpuUsed2.toFixed(2)}`, {
+                textColor: customColors.white,
+                bgColor: customColors.lightBlue,
+            })
             const statName: RoomCommuneStatNames = 'prmcu'
             const statName2: RoomCommuneStatNames = 'prmpccu'
             globalStatsUpdater(room.name, statName, cpuUsed)
@@ -58,19 +54,7 @@ export class PowerCreepRoleManager {
 
         // Run manager
 
-        try {
-            managers[className](this.roomManager.room, this.roomManager.room.myPowerCreeps[className])
-        } catch (err) {
-            customLog(
-                'Exception processing creep role: ' + className + ' in ' + this.roomManager.room.name + '. ',
-                err + '\n' + (err as any).stack,
-                {
-                    textColor: myColors.white,
-                    bgColor: myColors.red,
-                    superPosition: 3,
-                },
-            )
-        }
+        managers[className](this.roomManager.room, this.roomManager.room.myPowerCreeps[className])
 
         // Log className cpu
 

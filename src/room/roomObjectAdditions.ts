@@ -13,29 +13,35 @@ Object.defineProperties(RoomObject.prototype, {
             return this._effectsData
         },
     },
-    estimatedHits: {
+    nextHits: {
         get(this: Structure<BuildableStructureConstant>) {
-            if (this._estimatedHits) return this._estimatedHits
+            if (this._nextHits) return this._nextHits
 
-            return (this._estimatedHits = this.hits)
+            return (this._nextHits = this.hits)
         },
         set(newEstimatedHits) {
-            this._estimatedHits = newEstimatedHits
+            this._nextHits = newEstimatedHits
+        },
+    },
+    nextStore: {
+        get(this: AnyStoreStructure) {
+            if (this._nextStore) return this._nextStore
+
+            return (this._nextStore = JSON.parse(JSON.stringify(this.store)))
         },
     },
     reserveStore: {
         get(this: AnyStoreStructure) {
             if (this._reserveStore) return this._reserveStore
 
-            return (this._reserveStore = JSON.parse(JSON.stringify(this as AnyStoreStructure)))
+            return (this._reserveStore = JSON.parse(JSON.stringify(this.store)))
         },
     },
     reservePowers: {
         get() {
-
             if (this._reservePowers) return this._reservePowers
 
-            return this._reservePowers = new Set()
+            return (this._reservePowers = new Set())
         },
-    }
+    },
 } as PropertyDescriptorMap & ThisType<RoomObject>)

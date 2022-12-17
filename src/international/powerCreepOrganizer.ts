@@ -1,5 +1,5 @@
 import { creepClasses } from 'room/creeps/creepClasses'
-import { myColors, remoteRoles } from './constants'
+import { customColors, remoteRoles } from './constants'
 import { customLog } from './utils'
 import { internationalManager, InternationalManager } from './internationalManager'
 import { packCoord } from 'other/packrat'
@@ -19,31 +19,20 @@ class PowerCreepOrganizer {
         for (const creepName in Memory.powerCreeps) {
             // The creep has been deleted, delete it from memory
 
-            if (!Game.creeps[creepName]) delete Memory.powerCreeps[creepName]
+            if (!Game.powerCreeps[creepName]) delete Memory.powerCreeps[creepName]
         }
 
         // Process and organize existing creeps
 
         for (const creepName in Game.powerCreeps) {
-            try {
-                this.processCreep(creepName)
-            } catch (err) {
-                customLog(
-                    'Exception processing creep: ' + creepName + err,
-                    (err as any).stack,
-                    {
-                        textColor: myColors.white,
-                        bgColor: myColors.red
-                    }
-                )
-            }
+            this.processCreep(creepName)
         }
 
         if (Memory.CPULogging === true) {
             const cpuUsed = Game.cpu.getUsed() - managerCPUStart
             customLog('Power Creep Organizer', cpuUsed.toFixed(2), {
-                textColor: myColors.white,
-                bgColor: myColors.lightBlue
+                textColor: customColors.white,
+                bgColor: customColors.lightBlue,
             })
             const statName: InternationalStatNames = 'pccu'
             globalStatsUpdater('', statName, cpuUsed, true)

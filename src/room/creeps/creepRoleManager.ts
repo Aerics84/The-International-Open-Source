@@ -1,7 +1,7 @@
 import './creepPrototypes/creepFunctions'
 import './creepPrototypes/creepMoveFunctions'
 
-import { creepRoles, myColors } from 'international/constants'
+import { creepRoles, customColors } from 'international/constants'
 import { customLog } from 'international/utils'
 import { Maintainer } from './roleManagers/commune/maintainer'
 import { Builder } from './roleManagers/commune/builder'
@@ -83,8 +83,8 @@ export class CreepRoleManager {
             const cpuUsed = Game.cpu.getUsed() - managerCPUStart
             const cpuUsed2 = this.roomManager.room.myCreepsAmount ? cpuUsed / this.roomManager.room.myCreepsAmount : 0
             customLog('Role Manager', `CPU: ${cpuUsed.toFixed(2)}, CPU Per Creep: ${cpuUsed2.toFixed(2)}`, {
-                textColor: myColors.white,
-                bgColor: myColors.lightBlue,
+                textColor: customColors.white,
+                bgColor: customColors.lightBlue,
             })
             const statName: RoomCommuneStatNames = 'rolmcu'
             const statName2: RoomCommuneStatNames = 'rolmpccu'
@@ -106,19 +106,7 @@ export class CreepRoleManager {
 
         // Run manager
 
-        try {
-            managers[role](this.roomManager.room, this.roomManager.room.myCreeps[role])
-        } catch (err) {
-            customLog(
-                'Exception processing creep role: ' + role + ' in ' + this.roomManager.room.name + '. ',
-                err + '\n' + (err as any).stack,
-                {
-                    textColor: myColors.white,
-                    bgColor: myColors.red,
-                    superPosition: 2,
-                },
-            )
-        }
+        managers[role](this.roomManager.room, this.roomManager.room.myCreeps[role])
 
         // Log role stats
 

@@ -142,25 +142,17 @@ export class TerminalManager {
         }
     }
 
-    private respondToTerminalRequests() {
-        // We don't have enough energy to help other rooms
+    findBestTerminalRequest() {
+        let lowestScore = Infinity
+        let bestRequest: TerminalRequest
 
-        if (this.communeManager.room.resourcesInStoringStructures.energy < this.communeManager.minStoredEnergy / 2)
-            return false
+        for (const ID in internationalManager.terminalRequests) {
+            const request = internationalManager.terminalRequests[ID]
 
-        const { terminal } = this.communeManager.room
+            const score =
+                Game.map.getRoomLinearDistance(this.communeManager.room.name, request.roomName) + request.priority * 100
+            if (score >= lowestScore) continue
 
-        // Sort by range between rooms and priority, weighted
-
-        const terminalRequestsByScore = Object.values(internationalManager.terminalRequests).sort((a, b) => {
-            return (
-                Game.map.getRoomLinearDistance(this.communeManager.room.name, a.roomName) +
-                a.priority * 100 -
-                (Game.map.getRoomLinearDistance(this.communeManager.room.name, b.roomName) + b.priority * 100)
-            )
-        })
-
-        for (const request of terminalRequestsByScore) {
             // Don't respond to requests for this room
 
             if (request.roomName === this.communeManager.room.name) continue
@@ -169,21 +161,39 @@ export class TerminalManager {
 
             if (
                 Game.market.calcTransactionCost(request.amount, this.communeManager.room.name, request.roomName) * 2 >
-                terminal.store.energy
+                this.communeManager.room.terminal.store.energy
             )
                 continue
 
             // Make sure we have extra
 
-            if (terminal.store.getUsedCapacity(request.resource) < request.amount * 2) continue
+            if (this.communeManager.room.terminal.store.getUsedCapacity(request.resource) < request.amount * 2) continue
 
-            terminal.send(request.resource, request.amount, request.roomName, 'Terminal request response')
-            delete internationalManager.terminalRequests[request.ID]
-
-            return true
+            bestRequest = request
+            lowestScore = score
         }
 
-        return false
+        return bestRequest
+    }
+
+    private respondToTerminalRequests() {
+        // We don't have enough energy to help other rooms
+
+        if (this.communeManager.room.resourcesInStoringStructures.energy < this.communeManager.minStoredEnergy)
+            return false
+
+        const request = this.findBestTerminalRequest()
+        if (!request) return false
+
+        this.communeManager.room.terminal.send(
+            request.resource,
+            request.amount,
+            request.roomName,
+            'Terminal request response',
+        )
+        delete internationalManager.terminalRequests[request.ID]
+
+        return true
     }
 
     private respondToAllyRequests() {

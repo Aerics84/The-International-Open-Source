@@ -1,4 +1,4 @@
-import { CombatRequestData, myColors } from 'international/constants'
+import { CombatRequestData, customColors } from 'international/constants'
 import { advancedFindDistance, customLog } from 'international/utils'
 import { internationalManager } from 'international/internationalManager'
 import { CommuneManager } from './communeManager'
@@ -46,8 +46,8 @@ export class CombatRequestManager {
         if (Memory.CPULogging === true) {
             const cpuUsed = Game.cpu.getUsed() - managerCPUStart
             customLog('Combat Request Manager', cpuUsed.toFixed(2), {
-                textColor: myColors.white,
-                bgColor: myColors.lightBlue,
+                textColor: customColors.white,
+                bgColor: customColors.lightBlue,
             })
             const statName: RoomCommuneStatNames = 'cormcu'
             globalStatsUpdater(room.name, statName, cpuUsed)

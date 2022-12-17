@@ -19,7 +19,7 @@ import './combatRequestManager'
 import {
     creepRoles,
     impassibleStructureTypesSet,
-    myColors,
+    customColors,
     remoteRoles,
     roomDimensions,
     stamps,
@@ -177,18 +177,7 @@ export class CommuneManager {
         this.combatManager.manageThreat()
         this.combatManager.manageDefenceRequests()
 
-        try {
-            this.terminalManager.run()
-        } catch (err) {
-            customLog(
-                'Exception processing terminalManager in ' + this.room.name + '. ',
-                err + '\n' + (err as any).stack,
-                {
-                    textColor: myColors.white,
-                    bgColor: myColors.red,
-                },
-            )
-        }
+        this.terminalManager.run()
 
         this.claimRequestManager.run()
         this.combatRequestManager.run()
@@ -217,13 +206,12 @@ export class CommuneManager {
     }
 
     private test() {
-
         return
 
         let CPUUsed = Game.cpu.getUsed()
 
         customLog('CPU TEST 1', Game.cpu.getUsed() - CPUUsed, {
-            bgColor: myColors.red,
+            bgColor: customColors.red,
         })
     }
 
