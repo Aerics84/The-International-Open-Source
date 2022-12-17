@@ -347,7 +347,7 @@ export class CommuneManager {
         const level = this.room.controller.level
 
         return Math.min(
-            Math.floor(Math.pow((level - 3) * 10, 4) + 20000 + this.room.memory.AT * Math.pow(level, 1.8) * 10),
+            Math.floor(Math.pow((level - 3) * 10, 4.75) + 20000 + this.room.memory.AT * Math.pow(level, 1.8) * 10),
             RAMPART_HITS_MAX[level],
         )
     }

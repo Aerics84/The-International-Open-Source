@@ -60,6 +60,8 @@ InternationalManager.prototype.mapVisualsManager = function () {
 
             if (roomMemory.combatRequests.length) {
                 for (const requestName of roomMemory.combatRequests) {
+                    let color = Memory.combatRequests[requestName]?.T === 'defend' ? myColors.darkBlue : myColors.red
+
                     Game.map.visual.line(
                         room.anchor || new RoomPosition(25, 25, roomName),
                         new RoomPosition(25, 25, requestName),
@@ -93,7 +95,7 @@ InternationalManager.prototype.mapVisualsManager = function () {
                     })
 
                     // Get the income based on the reservation of the room and remoteHarvester need
-                    console.log(roomName)
+                    //console.log(roomName)
                     const income =
                         (possibleReservation ? 10 : 5) -
                         Math.floor(roomMemory.data[RemoteData[remoteHarvesterRoles[sourceIndex]]] * minHarvestWorkRatio)
