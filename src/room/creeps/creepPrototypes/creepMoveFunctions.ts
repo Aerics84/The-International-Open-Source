@@ -240,8 +240,6 @@ PowerCreep.prototype.createMoveRequest = Creep.prototype.createMoveRequest = fun
     if (this.spawning) {
         const spawn = findObjectWithID(this.spawnID)
 
-        if (spawn.spawning.remainingTime <= 1) this.assignMoveRequest(path[0])
-
         // Ensure we aren't using the default direction
 
         if (spawn.spawning.directions) return true
@@ -460,6 +458,8 @@ PowerCreep.prototype.recurseMoveRequest = Creep.prototype.recurseMoveRequest = f
     // If there is no creep at the pos
 
     if (!creepNameAtPos) {
+        if (this.spawning) return
+
         // loop through each index of the queue, drawing visuals
 
         if (Memory.roomVisuals) {
@@ -495,6 +495,17 @@ PowerCreep.prototype.recurseMoveRequest = Creep.prototype.recurseMoveRequest = f
     // Get the creepAtPos with the name
 
     const creepAtPos = Game.creeps[creepNameAtPos] || Game.powerCreeps[creepNameAtPos]
+
+    // We're spawning, just get us space to move into
+
+    if (this.spawning) {
+        if (creepAtPos.shove(this.pos)) {
+
+            room.moveRequests.delete(this.moveRequest)
+        }
+
+        return
+    }
 
     if (creepAtPos.moved) {
         if (creepAtPos.moved === 'moved') {
