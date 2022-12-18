@@ -231,32 +231,37 @@ export class CommuneManager {
     }
 
     public findMinRangedAttackCost(minDamage: number = 10) {
-        return (
+        const rawCost =
             (minDamage / RANGED_ATTACK_POWER) * BODYPART_COST[RANGED_ATTACK] +
             (minDamage / RANGED_ATTACK_POWER) * BODYPART_COST[MOVE]
-        )
+        const combinedCost = BODYPART_COST[RANGED_ATTACK] + BODYPART_COST[MOVE]
+
+        return Math.ceil(rawCost / combinedCost) * combinedCost
     }
 
     public findMinMeleeAttackCost(minDamage: number = 30) {
-        return (minDamage / ATTACK_POWER) * BODYPART_COST[ATTACK] + (minDamage / ATTACK_POWER) * BODYPART_COST[MOVE]
+        const rawCost =
+            (minDamage / ATTACK_POWER) * BODYPART_COST[ATTACK] + (minDamage / ATTACK_POWER) * BODYPART_COST[MOVE]
+        const combinedCost = BODYPART_COST[ATTACK] + BODYPART_COST[MOVE]
+
+        return Math.ceil(rawCost / combinedCost) * combinedCost
     }
 
     /**
-     * Finds how expensive it will be to provide enough heal parts to withstand a melee attack
+     * Finds how expensive it will be to provide enough heal parts to withstand attacks
      */
-    public findMinMeleeHealCost(minHeal: number = 0) {
-        return (minHeal / HEAL_POWER) * BODYPART_COST[HEAL] + (minHeal / HEAL_POWER) * BODYPART_COST[MOVE]
-    }
+    public findMinHealCost(minHeal: number = 12) {
+        const rawCost = (minHeal / HEAL_POWER) * BODYPART_COST[HEAL] + (minHeal / HEAL_POWER) * BODYPART_COST[MOVE]
+        const combinedCost = BODYPART_COST[HEAL] + BODYPART_COST[MOVE]
 
-    /**
-     * Finds how expensive it will be to provide enough heal parts to withstand a ranged attack
-     */
-    public findMinRangedHealCost(minHeal: number = 0) {
-        return (minHeal / HEAL_POWER) * BODYPART_COST[HEAL] + (minHeal / HEAL_POWER) * BODYPART_COST[MOVE]
+        return Math.ceil(rawCost / combinedCost) * combinedCost
     }
 
     public findMinDismantleCost(minDismantle: number = 0) {
-        return minDismantle * BODYPART_COST[WORK] + minDismantle * BODYPART_COST[MOVE]
+        const rawCost = minDismantle * BODYPART_COST[WORK] + minDismantle * BODYPART_COST[MOVE]
+        const combinedCost = BODYPART_COST[WORK] + BODYPART_COST[MOVE]
+
+        return Math.ceil(rawCost / combinedCost) * combinedCost
     }
 
     inputLabIDs: Id<StructureLab>[]
@@ -328,19 +333,34 @@ export class CommuneManager {
         return true
     }
 
-    get storedEnergyUpgradeThreshold() {
-        return this.room.controller.level * 10000
-    }
-
-    get storedEnergyBuildThreshold() {
-        return this.room.controller.level * 8000
-    }
+    _minStoredEnergy: number
 
     /**
      * The minimum amount of stored energy the room should only use in emergencies
      */
     get minStoredEnergy() {
-        return Math.floor(Math.pow(this.room.controller.level * 8000, 1.05) + this.room.memory.AT * 20)
+        if (this._minStoredEnergy !== undefined) return this._minStoredEnergy
+
+        // Consider the controller level to an exponent and this room's attack threat
+
+        this._minStoredEnergy = Math.floor(Math.pow(this.room.controller.level * 8000, 1.05) + this.room.memory.AT * 20)
+
+        // Take away some minimum based on how close we are to the next RCL
+
+        if (this.room.controller.level < 8)
+            this._minStoredEnergy -= Math.pow(
+                (this.room.controller.progress / this.room.controller.progressTotal) * 20,
+                3.3,
+            )
+        return this._minStoredEnergy
+    }
+
+    get storedEnergyUpgradeThreshold() {
+        return this.minStoredEnergy
+    }
+
+    get storedEnergyBuildThreshold() {
+        return this.minStoredEnergy * 0.8
     }
 
     get minRampartHits() {
