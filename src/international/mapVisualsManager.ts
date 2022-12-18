@@ -60,13 +60,14 @@ InternationalManager.prototype.mapVisualsManager = function () {
 
             if (roomMemory.combatRequests.length) {
                 for (const requestName of roomMemory.combatRequests) {
-                    let color = Memory.combatRequests[requestName]?.T === 'defend' ? myColors.darkBlue : myColors.red
+                    let color =
+                        Memory.combatRequests[requestName]?.T === 'defend' ? customColors.darkBlue : customColors.red
 
                     Game.map.visual.line(
                         room.anchor || new RoomPosition(25, 25, roomName),
                         new RoomPosition(25, 25, requestName),
                         {
-                            color: customColors.red,
+                            color,
                             width: 1.2,
                             opacity: 0.3,
                         },

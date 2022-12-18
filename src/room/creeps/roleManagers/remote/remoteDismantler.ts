@@ -34,7 +34,7 @@ export class RemoteDismantler extends Creep {
 
         // Reduce remote need
 
-        Memory.rooms[this.memory.RN].data[RemoteData[role]] -= 1
+        if (Memory.rooms[this.memory.RN]?.data) Memory.rooms[this.memory.RN].data[RemoteData[role]] -= 1
 
         const commune = this.commune
 
@@ -47,7 +47,12 @@ export class RemoteDismantler extends Creep {
      * Finds a remote
      */
     findRemote?(): boolean {
-        if (this.memory.RN && Memory.rooms[this.memory.RN].T === 'remote' && Memory.rooms[this.memory.RN].CN === this.commune.name) return true
+        if (
+            this.memory.RN &&
+            Memory.rooms[this.memory.RN].T === 'remote' &&
+            Memory.rooms[this.memory.RN].CN === this.commune.name
+        )
+            return true
 
         // If the creep already has a remote, inform true
 
