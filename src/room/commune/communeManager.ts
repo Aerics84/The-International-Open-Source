@@ -45,6 +45,7 @@ import { HaulRequestManager } from './haulRequestManager'
 import { HaulerSizeManager } from './haulerSize'
 import { HaulerNeedManager } from './haulerNeedManager'
 import { packXYAsCoord, unpackCoord, unpackPosList } from 'other/packrat'
+import { ContainerManager } from './containerManager'
 
 export class CommuneManager {
     // Managers
@@ -56,6 +57,7 @@ export class CommuneManager {
     powerSpawnManager: PowerSpawnManager
     spawnManager: SpawnManager
     sourceManager: SourceManager
+    containerManager: ContainerManager
 
     terminalManager: TerminalManager
     remotesManager: RemotesManager
@@ -79,6 +81,7 @@ export class CommuneManager {
         this.powerSpawnManager = new PowerSpawnManager(this)
         this.spawnManager = new SpawnManager(this)
         this.sourceManager = new SourceManager(this)
+        this.containerManager = new ContainerManager(this)
 
         this.terminalManager = new TerminalManager(this)
         this.remotesManager = new RemotesManager(this)
@@ -93,6 +96,7 @@ export class CommuneManager {
 
     room: Room
     structures: OrganizedStructures
+    nextSpawnEnergyAvailable: number
 
     public update(room: Room) {
         this.room = room
@@ -113,7 +117,9 @@ export class CommuneManager {
 
         room.spawnRequests = []
         room.upgradeStrength = 0
+        room.roomLogisticsRequests = {}
         room.haulerNeed = 0
+        this.nextSpawnEnergyAvailable = room.energyAvailable
 
         if (!room.memory.remotes) room.memory.remotes = []
 
@@ -134,6 +140,7 @@ export class CommuneManager {
         this.haulRequestManager.preTickRun()
         this.sourceManager.preTickRun()
         this.claimRequestManager.preTickRun()
+        this.containerManager.preTickRun()
 
         // Add roomName to commune list
 

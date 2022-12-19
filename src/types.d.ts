@@ -327,31 +327,58 @@ declare global {
 
     type FlagNames = 'disableTowerAttacks' | 'internationalDataVisuals'
 
-    type LogisticTaskTypes = 'transfer' | 'withdraw' | 'pickup' | 'offer'
+    type RoomLogisticsRequestTypes = 'transfer' | 'withdraw' | 'pickup' | 'offer'
 
-    interface LogisticTask {
-        ID: number
-        Type: LogisticTaskTypes
-        TargetID: Id<AnyStoreStructure | Creep | Tombstone | Ruin | Resource>
-        ResourceType: ResourceConstant
+    interface RoomLogisticsRequest {
+        ID?: number
+        type: RoomLogisticsRequestTypes
+        /**
+         * Consider in weighting the task
+         */
+        priority?: number
+        targetID: Id<AnyStoreStructure | Creep | Tombstone | Ruin | Resource>
+        resourceType: ResourceConstant
+        amount: number
+        /**
+         * If the responder should only take the task if it will use its full capacity. Default is false
+         */
+        onlyFull?: boolean
     }
 
-    interface CreepLogisticTask {
+    interface CreateRoomLogisticsRequestArgs {
+        type: RoomLogisticsRequestTypes
+        target: AnyStoreStructure | Creep | Tombstone | Ruin | Resource
+        resourceType?: ResourceConstant
+        amount: number
+        onlyFull?: boolean
+        threshold?: number
+        priority?: number
+    }
+
+    interface CreepRoomLogisticsRequest {
         /**
          * The Type of logistic task
          */
-        T: LogisticTaskTypes
+        T: RoomLogisticsRequestTypes
+        /**
+         * Target ID
+         */
+        TID: Id<AnyStoreStructure | Creep | Tombstone | Ruin | Resource>
+        /**
+         * The Resource Type involved
+         */
+        RT: ResourceConstant
         /**
          * The Amount of resources involved
          */
         A: number
         /**
-         * The Resource Type involved
+         * Only Full, if they want a responder only if fully filled
          */
-        RT: ResourceConstant
+        OF?: boolean
     }
 
-    interface CreepLogisticTansferTask extends CreepLogisticTask {
+    interface CreepRoomLogisticsTansferTask extends CreepRoomLogisticsRequest {
         /**
          * The Type of logistic task
          */
@@ -362,7 +389,7 @@ declare global {
         TID: Id<AnyStoreStructure>
     }
 
-    interface CreepLogisticWithdrawTask extends CreepLogisticTask {
+    interface CreepRoomLogisticsWithdrawTask extends CreepRoomLogisticsRequest {
         /**
          * The Type of logistic task
          */
@@ -373,7 +400,7 @@ declare global {
         TID: Id<AnyStoreStructure | Tombstone | Ruin | Creep>
     }
 
-    interface CreepLogisticPickupTask extends CreepLogisticTask {
+    interface CreepRoomLogisticsPickupTask extends CreepRoomLogisticsRequest {
         /**
          * The Type of logistic task
          */
@@ -384,7 +411,7 @@ declare global {
         TID: Id<AnyStoreStructure>
     }
 
-    interface CreepLogisticOfferTask extends CreepLogisticTask {
+    interface CreepRoomLogisticsOfferTask extends CreepRoomLogisticsRequest {
         /**
          * The Type of logistic task
          */
@@ -459,6 +486,8 @@ declare global {
     }
 
     interface HaulRequest {
+        data: number[]
+        responder?: string
     }
 
     interface ControllerLevel {
@@ -954,6 +983,7 @@ declare global {
          */
         squadRequests: Set<string>
 
+        roomLogisticsRequests: { [ID: number]: RoomLogisticsRequest }
         powerTasks: { [ID: number]: PowerTask }
 
         attackingDefenderIDs: Set<Id<Creep>>
@@ -1133,6 +1163,8 @@ declare global {
         createPowerTask(target: Structure | Source, powerType: PowerConstant, priority: number): PowerTask | false
 
         highestWeightedStoringStructures(resourceType: ResourceConstant): AnyStoreStructure | false
+
+        createRoomLogisticsRequest(args: CreateRoomLogisticsRequestArgs): void
 
         /**
          * Crudely estimates a room's income by accounting for the number of work parts owned by sourceHarvesters
@@ -2293,7 +2325,9 @@ declare global {
 
         // Functions
 
-        advancedSpawn(spawnRequest: SpawnRequest): ScreepsReturnCode
+        testSpawn(spawnRequest: SpawnRequest, ID: number): ScreepsReturnCode
+
+        advancedSpawn(spawnRequest: SpawnRequest, ID: number): ScreepsReturnCode
     }
 
     interface StructureExtension {
