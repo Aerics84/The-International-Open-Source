@@ -464,7 +464,7 @@ export class RemoteHauler extends Creep {
                 },
             },
             {
-                packedPath: Memory.rooms[this.memory.RN].SPs[this.memory.SI],
+                packedPath: Memory.rooms[this.commune.name].SPs[this.memory.SI],
             },
         )
 
@@ -485,8 +485,8 @@ export class RemoteHauler extends Creep {
         if (creepAtPos.movedResource) return false
         if (creepAtPos.store.getUsedCapacity() === creepAtPos.store.getCapacity()) return false
         if (
-            creepAtPos.store.getFreeCapacity() !== this.store.getUsedCapacity(RESOURCE_ENERGY) &&
-            creepAtPos.store.getCapacity() !== this.store.getCapacity()
+            creepAtPos.store.getFreeCapacity() < this.store.getUsedCapacity(RESOURCE_ENERGY) &&
+            creepAtPos.store.getCapacity() < this.store.getCapacity()
         )
             return false
 
@@ -518,7 +518,7 @@ export class RemoteHauler extends Creep {
         delete this.memory.P
         delete creepAtPos.memory.P
 
-        this.getResources()
+        //this.getResources()
 
         const remoteHauler = creepAtPos as RemoteHauler
         remoteHauler.deliverResources()
