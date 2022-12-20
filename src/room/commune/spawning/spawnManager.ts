@@ -80,9 +80,8 @@ export class SpawnManager {
         // Loop through priorities inside requestsByPriority
 
         for (const index in this.communeManager.room.spawnRequests) {
-
             const request = this.communeManager.room.spawnRequests[index]
-            if (request.cost > this.communeManager.nextSpawnEnergyAvailable) continue
+            if (request.cost > this.communeManager.nextSpawnEnergyAvailable) break
 
             // We're trying to build a creep larger than this room can spawn
             // If this is ran then there is a bug in spawnRequest creation
@@ -189,7 +188,6 @@ export class SpawnManager {
     }
 
     private findDirections(pos: RoomPosition) {
-
         const adjacentCoords: Coord[] = []
 
         for (let x = pos.x - 1; x <= pos.x + 1; x += 1) {

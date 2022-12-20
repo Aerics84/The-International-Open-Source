@@ -1055,6 +1055,8 @@ Object.defineProperties(Room.prototype, {
 
                 const pos = rawFastFillerPositions[index]
 
+                if (pos.lookFor(LOOK_STRUCTURES).filter(s => s.structureType === STRUCTURE_SPAWN).length) continue
+
                 // Get adjacent structures
 
                 const adjacentStructures = this.lookForAtArea(
@@ -2047,18 +2049,16 @@ Object.defineProperties(Room.prototype, {
     },
     exitCoords: {
         get() {
-
             if (this._exitCoords) return this._exitCoords
 
             this._exitCoords = new Set()
 
             for (const exit of this.find(FIND_EXIT)) {
-
                 this._exitCoords.add(packCoord(exit))
             }
 
             return this._exitCoords
-        }
+        },
     },
     MEWT: {
         get() {

@@ -240,8 +240,7 @@ Room.prototype.spawnRequestByGroup = function (opts) {
 
         // Take away the amount of parts the creep with the name has from totalExtraParts
 
-        totalExtraParts -= creep.body.length
-        if (creep.defaultParts) totalExtraParts -= creep.defaultParts
+        totalExtraParts -= creep.body.length - creep.defaultParts
     }
 
     // If there aren't enough requested parts to justify spawning a creep, stop
