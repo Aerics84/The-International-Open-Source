@@ -2041,6 +2041,8 @@ declare global {
 
         manageSpawning(spawn: StructureSpawn): void
 
+        findRoomLogisticsRequest(): CreepRoomLogisticsRequest | 0
+
         // Creep Getters
 
         _role: CreepRoles
@@ -2078,6 +2080,10 @@ declare global {
         _reservation: Reservation
 
         readonly reservation: Reservation
+
+        _roomLogisticsRequest: CreepRoomLogisticsRequest
+
+        readonly roomLogisticsRequest: CreepRoomLogisticsRequest
 
         _upgradeStrength: number
 
@@ -2142,7 +2148,7 @@ declare global {
         LC: number
 
         /**
-         * An array of positions desciring where the creep neeeds to move to get to its goal
+         * A packed pos list desciring where the creep neeeds to move to get to its goal
          */
         P: string
 
@@ -2185,6 +2191,11 @@ declare global {
          * Reservations, An array of targets with information to manage the resources of
          */
         Rs: Reservation[]
+
+        /**
+         * Room Logistics Requests
+         */
+        RLRs: CreepRoomLogisticsRequest[]
 
         /**
          * The target for which the creep should dismantle
