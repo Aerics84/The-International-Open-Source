@@ -55,9 +55,9 @@ export class TowerManager {
 
         if (room.towerAttackTarget) return room.towerAttackTarget
 
-        const attackTargets = room.enemyCreeps.filter(function (creep) {
+        const attackTargets = room.enemyCreeps /*.filter(function (creep) {
             return !creep.isOnExit
-        })
+        })*/
 
         if (!attackTargets.length) return false
 
@@ -66,7 +66,7 @@ export class TowerManager {
         let highestDamage = 0
 
         for (const enemyCreep of room.enemyCreeps) {
-            if (enemyCreep.isOnExit) continue
+            if (enemyCreep.isOnExit && enemyCreep.owner.username !== 'Nachtgleiter') continue
 
             const netTowerDamage = enemyCreep.netTowerDamage
             if (netTowerDamage < highestDamage) continue

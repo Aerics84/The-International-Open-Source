@@ -87,7 +87,7 @@ Object.defineProperties(Room.prototype, {
             if (this._sourcesByEfficacy) return this._sourcesByEfficacy
 
             this._sourcesByEfficacy = [].concat(this.sources)
-            console.log(this.name)
+            //console.log(this.name)
             return this._sourcesByEfficacy.sort((a, b) => {
                 return this.sourcePaths[a.index].length - this.sourcePaths[b.index].length
             })
@@ -454,9 +454,13 @@ Object.defineProperties(Room.prototype, {
             if (this.controller && (this.controller.my || this.controller.reservation))
                 return this._combatStructureTargets
 
-            if (this.controller.owner && Memory.allyPlayers.includes(this.controller.owner.username))
+            if (this.controller && this.controller.owner && Memory.allyPlayers.includes(this.controller.owner.username))
                 return this._combatStructureTargets
-            if (this.controller.reservation && Memory.allyPlayers.includes(this.controller.reservation.username))
+            if (
+                this.controller &&
+                this.controller.reservation &&
+                Memory.allyPlayers.includes(this.controller.reservation.username)
+            )
                 return this._combatStructureTargets
 
             this._combatStructureTargets = this._combatStructureTargets.concat(this.structures.spawn)
@@ -914,6 +918,15 @@ Object.defineProperties(Room.prototype, {
                 this._usedUpgradePositions.add(creep.memory.PC)
             }
 
+            // If a source container / link is nearby block the pos
+
+            for (const container of this.sourceContainers) {
+                this._usedUpgradePositions.add(packPos(container.pos))
+            }
+            for (const links of this.sourceLinks) {
+                this._usedUpgradePositions.add(packPos(links.pos))
+            }
+
             if (this.controllerLink) this._usedUpgradePositions.add(packPos(this.controllerLink.pos))
             /*
             for (const packedCoord of this._usedUpgradePositions) {
@@ -1041,6 +1054,8 @@ Object.defineProperties(Room.prototype, {
                 // Get the pos using the index
 
                 const pos = rawFastFillerPositions[index]
+
+                if (pos.lookFor(LOOK_STRUCTURES).filter(s => s.structureType === STRUCTURE_SPAWN).length) continue
 
                 // Get adjacent structures
 
@@ -2034,18 +2049,16 @@ Object.defineProperties(Room.prototype, {
     },
     exitCoords: {
         get() {
-
             if (this._exitCoords) return this._exitCoords
 
             this._exitCoords = new Set()
 
             for (const exit of this.find(FIND_EXIT)) {
-
                 this._exitCoords.add(packCoord(exit))
             }
 
             return this._exitCoords
-        }
+        },
     },
     MEWT: {
         get() {
@@ -2125,12 +2138,22 @@ Object.defineProperties(Room.prototype, {
     MAWT: {
         get() {
             if (this._MAWT) return this._MAWT
-
             this._MAWT = [
                 ...this.droppedResources,
                 ...this.find(FIND_TOMBSTONES).filter(cr => cr.store.getUsedCapacity() > 0),
                 ...this.find(FIND_RUINS).filter(ru => ru.ticksToDecay < 10000 && ru.store.getUsedCapacity() > 0),
-                ...this.sourceContainers.filter(cr => cr.store.getUsedCapacity() > 0),
+                ...this.sourceContainers.filter(
+                    sc =>
+                        sc.store.getUsedCapacity() >
+                        _.sum(
+                            _.filter(
+                                Game.creeps,
+                                c => c.memory.Rs && c.memory.Rs?.length > 0 && c.memory.Rs[0].targetID === sc.id,
+                            ),
+                            c => c.memory.Rs[0].amount,
+                        ) +
+                            50,
+                ),
                 ...(this.find(FIND_HOSTILE_STRUCTURES).filter(structure => {
                     return (
                         (structure as any).store &&
