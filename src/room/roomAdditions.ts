@@ -1055,8 +1055,6 @@ Object.defineProperties(Room.prototype, {
 
                 const pos = rawFastFillerPositions[index]
 
-                if (pos.lookFor(LOOK_STRUCTURES).filter(s => s.structureType === STRUCTURE_SPAWN).length) continue
-
                 // Get adjacent structures
 
                 const adjacentStructures = this.lookForAtArea(
