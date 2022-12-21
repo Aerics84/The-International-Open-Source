@@ -192,7 +192,7 @@ class TickConfig {
             }
 
             const communeName = findClosestRoomName(roomName, communesForResponding)
-            if (!communeName) break
+            if (!communeName) continue
 
             // Run a more simple and less expensive check, then a more complex and expensive to confirm. If the check fails, abandon the room for some time
 

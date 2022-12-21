@@ -80,7 +80,6 @@ export class SpawnManager {
         // Loop through priorities inside requestsByPriority
 
         for (const index in this.communeManager.room.spawnRequests) {
-
             const request = this.communeManager.room.spawnRequests[index]
             if (request.cost > this.communeManager.nextSpawnEnergyAvailable) break
 
@@ -209,7 +208,6 @@ export class SpawnManager {
     }
 
     private findDirections(pos: RoomPosition) {
-
         const adjacentCoords: Coord[] = []
 
         for (let x = pos.x - 1; x <= pos.x + 1; x += 1) {
