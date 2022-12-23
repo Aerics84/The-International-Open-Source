@@ -706,7 +706,7 @@ Room.prototype.scoutEnemyRoom = function () {
     // Combat request creation
 
     this.createAttackCombatRequest({
-        maxTowerDamage: Math.ceil(this.structures.tower.length * TOWER_POWER_ATTACK * 1.1),
+        maxTowerDamage: Math.ceil((this.structures.tower.filter(tower => tower.RCLActionable).length * TOWER_POWER_ATTACK) * 1.1),
         minDamage: 50,
     })
 
