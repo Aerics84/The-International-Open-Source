@@ -706,7 +706,9 @@ Room.prototype.scoutEnemyRoom = function () {
     // Combat request creation
 
     this.createAttackCombatRequest({
-        maxTowerDamage: Math.ceil((this.structures.tower.filter(tower => tower.RCLActionable).length * TOWER_POWER_ATTACK) * 1.1),
+        maxTowerDamage: Math.ceil(
+            this.structures.tower.filter(tower => tower.RCLActionable).length * TOWER_POWER_ATTACK * 1.1,
+        ),
         minDamage: 50,
     })
 
@@ -2335,12 +2337,10 @@ Room.prototype.highestWeightedStoringStructures = function (resourceType) {
 }
 
 Room.prototype.createRoomLogisticsRequest = function (args) {
-
     // Don't make requests when there is nobody to respond
 
     if (!this.myCreepsAmount) return RESULT_NO_ACTION
     if (!args.resourceType) args.resourceType = RESOURCE_ENERGY
-
     // We can only handle energy until we have a storage or terminal
     else if (
         args.resourceType !== RESOURCE_ENERGY &&
@@ -2386,7 +2386,7 @@ Room.prototype.createRoomLogisticsRequest = function (args) {
         delete args.onlyFull
 
     const ID = internationalManager.newTickID()
-/*     this.visual.text(args.priority.toString(), args.target.pos) */
+    this.visual.text(args.priority.toString(), args.target.pos)
     return (this.roomLogisticsRequests[args.type][ID] = {
         ID,
         type: args.type,

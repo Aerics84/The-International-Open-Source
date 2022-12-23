@@ -19,7 +19,6 @@ export class ContainerManager {
     }
 
     private runFastFillerContainers() {
-
         if (!this.roomManager.room.myCreeps.fastFiller.length) return
 
         const fastFillerContainers = [
@@ -35,7 +34,7 @@ export class ContainerManager {
                 type: 'transfer',
                 threshold: container.store.getCapacity(),
                 onlyFull: true,
-                priority: scalePriority(container.store.getCapacity(), container.reserveStore.energy, 5, true),
+                priority: scalePriority(container.store.getCapacity(), container.reserveStore.energy, 5, false),
             })
 
             this.roomManager.room.createRoomLogisticsRequest({
