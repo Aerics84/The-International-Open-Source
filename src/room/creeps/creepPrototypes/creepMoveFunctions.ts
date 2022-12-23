@@ -9,7 +9,7 @@ import {
     roomDimensions,
     TrafficPriorities,
 } from 'international/constants'
-import { internationalManager } from 'international/internationalManager'
+import { internationalManager } from 'international/international'
 import {
     areCoordsEqual,
     arePositionsEqual,
@@ -83,7 +83,6 @@ PowerCreep.prototype.createMoveRequestByPath = Creep.prototype.createMoveRequest
     // We're at the end of the path
 
     if (cachedIndex + 2 === pathOpts.packedPath.length) {
-
         if (pathOpts.loose) return this.createMoveRequest(opts)
         return true
     }
@@ -91,7 +90,6 @@ PowerCreep.prototype.createMoveRequestByPath = Creep.prototype.createMoveRequest
     // We're on the path and not at the end
 
     if (cachedIndex >= 0) {
-
         pathOpts.packedPath = pathOpts.packedPath.slice(cachedIndex + 2)
 
         let path: RoomPosition[]
@@ -99,17 +97,14 @@ PowerCreep.prototype.createMoveRequestByPath = Creep.prototype.createMoveRequest
         // If we have a remote, avoid abandoned remotes
 
         if (pathOpts.remoteName) {
-
             const roomNames: Set<string> = new Set()
             path = unpackPosList(pathOpts.packedPath)
 
             for (const pos of path) {
-
                 roomNames.add(pos.roomName)
             }
 
             for (const roomName of roomNames) {
-
                 const roomMemory = Memory.rooms[roomName]
 
                 if (Memory.rooms[roomName].T !== 'remote') continue
@@ -163,6 +158,7 @@ PowerCreep.prototype.createMoveRequest = Creep.prototype.createMoveRequest = fun
     if (!opts.cacheAmount) opts.cacheAmount = internationalManager.defaultMinCacheAmount
 
     let path: RoomPosition[]
+    if (this.spawning) path = []
 
     // If there is a path in the creep's memory and it isn't spawning
 
@@ -170,9 +166,6 @@ PowerCreep.prototype.createMoveRequest = Creep.prototype.createMoveRequest = fun
         path = unpackPosList(this.memory.P)
 
         // So long as the creep isn't standing on the first position in the path, and the pos is worth going on
-        /*
-        while (path[0] && getRangeOfCoords(path[0], this.pos) <= 1 && path.length > 1) {
- */
 
         while (path[0] && arePositionsEqual(this.pos, path[0])) {
             // Remove the first pos of the path
@@ -189,6 +182,7 @@ PowerCreep.prototype.createMoveRequest = Creep.prototype.createMoveRequest = fun
 
     if (needsNewPathResult) {
         // Assign the creep to the opts
+        room.visual.circle(this.pos, { fill: customColors.red })
 
         opts.creep = this
 
@@ -497,7 +491,6 @@ PowerCreep.prototype.recurseMoveRequest = Creep.prototype.recurseMoveRequest = f
 
     if (!creepNameAtPos) {
         if (this.spawning) {
-
             this.moved = this.moveRequest
             room.moveRequests.delete(this.moveRequest)
             return
@@ -543,7 +536,6 @@ PowerCreep.prototype.recurseMoveRequest = Creep.prototype.recurseMoveRequest = f
 
     if (this.spawning) {
         if (creepAtPos.shove(this.pos)) {
-
             this.moved = this.moveRequest
             room.moveRequests.delete(this.moveRequest)
         }

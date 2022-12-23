@@ -1,7 +1,7 @@
 import { chant, customColors, powerCreepClassNames } from 'international/constants'
 import { globalStatsUpdater } from 'international/statsManager'
 import { customLog, randomTick } from 'international/utils'
-import { RoomManager } from '../roomManager'
+import { RoomManager } from '../room'
 
 export class EndTickCreepManager {
     roomManager: RoomManager
@@ -26,6 +26,8 @@ export class EndTickCreepManager {
 
                 creep.endTickManager()
                 creep.recurseMoveRequest()
+
+                creep.say(creep.message)
             }
         }
 
@@ -37,6 +39,8 @@ export class EndTickCreepManager {
 
                 creep.endTickManager()
                 creep.recurseMoveRequest()
+
+                creep.say(creep.message)
             }
         }
 

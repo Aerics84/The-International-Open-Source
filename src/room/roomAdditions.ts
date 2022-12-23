@@ -20,7 +20,7 @@ import {
     packXYAsNum,
     unpackNumAsPos,
 } from 'international/utils'
-import { internationalManager } from 'international/internationalManager'
+import { internationalManager } from 'international/international'
 import {
     packCoord,
     packCoordList,
@@ -2261,4 +2261,12 @@ Object.defineProperties(Room.prototype, {
             return this._MOFTT
         },
     },
+    advancedLogistics: {
+        get() {
+
+            if (this._advancedLogistics !== undefined) return this._advancedLogistics
+
+            return (this._advancedLogistics = this.storage !== undefined || this.terminal !== undefined)
+        }
+    }
 } as PropertyDescriptorMap & ThisType<Room>)

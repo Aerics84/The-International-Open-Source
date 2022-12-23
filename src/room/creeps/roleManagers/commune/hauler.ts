@@ -178,7 +178,12 @@ export class Hauler extends Creep {
 
             creep.passiveRenew()
 
+            creep.runRoomLogisticsRequests()
+            /* creep.room.visual.text((creep.nextStore.energy).toString(), creep.pos) */
+
+/*
             creep.haul()
+             */
         }
     }
 }

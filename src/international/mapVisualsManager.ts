@@ -1,7 +1,7 @@
 import { unpackPosList } from 'other/packrat'
 import { minHarvestWorkRatio, customColors, remoteHarvesterRoles, RemoteData, ClaimRequestData } from './constants'
 import { customLog } from './utils'
-import { InternationalManager } from './internationalManager'
+import { InternationalManager } from './international'
 import { globalStatsUpdater } from './statsManager'
 
 InternationalManager.prototype.mapVisualsManager = function () {
@@ -97,6 +97,7 @@ InternationalManager.prototype.mapVisualsManager = function () {
 
                     // Get the income based on the reservation of the room and remoteHarvester need
                     //console.log(roomName)
+
                     const income =
                         (possibleReservation ? 10 : 5) -
                         Math.floor(roomMemory.data[RemoteData[remoteHarvesterRoles[sourceIndex]]] * minHarvestWorkRatio)
