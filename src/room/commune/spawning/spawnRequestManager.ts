@@ -1005,7 +1005,7 @@ Room.prototype.spawnRequester = function () {
                     extraParts: [CARRY, MOVE, WORK],
                     partsMultiplier,
                     threshold,
-                    maxCreeps,
+                    maxCreeps: Infinity,
                     minCost: 200,
                     priority,
                     memoryAdditions: {
@@ -1020,7 +1020,7 @@ Room.prototype.spawnRequester = function () {
                 extraParts: [MOVE, CARRY, MOVE, WORK],
                 partsMultiplier,
                 threshold,
-                maxCreeps,
+                maxCreeps: Infinity,
                 minCost: 250,
                 priority,
                 memoryAdditions: {},

@@ -947,7 +947,7 @@ declare global {
          */
         squadRequests: Set<string>
 
-        roomLogisticsRequests: { [key in RoomLogisticsRequestTypes]: { [ID: string]: RoomLogisticsRequest }}
+        roomLogisticsRequests: { [key in RoomLogisticsRequestTypes]: { [ID: string]: RoomLogisticsRequest } }
         powerTasks: { [ID: string]: PowerTask }
 
         attackingDefenderIDs: Set<Id<Creep>>
@@ -1660,11 +1660,6 @@ declare global {
         PC: boolean
 
         /**
-         * Placing completed for controler level. Set the rcl if all cs has been placed for the room
-         */
-        PCL: number
-
-        /**
          * Remote Planned, wether or not remote planning has been completed for the room
          */
         RP: boolean
@@ -2008,7 +2003,9 @@ declare global {
         findRoomLogisticsRequest(args?: findNewRoomLogisticsRequestArgs): CreepRoomLogisticsRequest | 0
         findRoomLogisticsRequestTypes(args?: findNewRoomLogisticsRequestArgs): Set<RoomLogisticsRequestTypes>
         canAcceptRoomLogisticsRequest(requestType: RoomLogisticsRequestTypes, requestID: string): boolean
-        createBackupStoringStructuresRoomLogisticsRequest(types: Set<RoomLogisticsRequestTypes>): CreepRoomLogisticsRequest | 0
+        createBackupStoringStructuresRoomLogisticsRequest(
+            types: Set<RoomLogisticsRequestTypes>,
+        ): CreepRoomLogisticsRequest | 0
         findRoomLogisticRequestAmount(request: RoomLogisticsRequest): number
 
         runRoomLogisticsRequest(args?: findNewRoomLogisticsRequestArgs): number

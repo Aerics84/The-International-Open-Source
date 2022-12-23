@@ -57,9 +57,9 @@ export class TowerManager {
 
         if (room.towerAttackTarget) return room.towerAttackTarget
 
-        const attackTargets = room.enemyCreeps /*.filter(function (creep) {
+        const attackTargets = room.enemyCreeps.filter(function (creep) {
             return !creep.isOnExit
-        })*/
+        })
 
         if (!attackTargets.length) return false
 
@@ -68,7 +68,7 @@ export class TowerManager {
         let highestDamage = 0
 
         for (const enemyCreep of room.enemyCreeps) {
-            if (enemyCreep.isOnExit && enemyCreep.owner.username !== 'Nachtgleiter') continue
+            if (enemyCreep.isOnExit) continue
 
             const netTowerDamage = enemyCreep.netTowerDamage
             if (netTowerDamage < highestDamage) continue
@@ -218,12 +218,11 @@ export class TowerManager {
 
     private createRoomLogisticsRequests() {
         for (const structure of this.communeManager.room.structures.tower) {
-
             this.communeManager.room.createRoomLogisticsRequest({
                 target: structure,
                 threshold: structure.store.getCapacity(RESOURCE_ENERGY) * 0.75,
                 type: 'transfer',
-                priority: scalePriority(structure.store.getCapacity(RESOURCE_ENERGY), structure.reserveStore.energy, ),
+                priority: scalePriority(structure.store.getCapacity(RESOURCE_ENERGY), structure.reserveStore.energy),
             })
         }
     }
