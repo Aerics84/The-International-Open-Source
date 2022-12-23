@@ -1,20 +1,14 @@
-import { getRange, unpackAsRoomPos } from 'international/generalFunctions'
+import { findClosestPos, getRange, getRangeOfCoords } from 'international/utils'
+import { packCoord, packPos, unpackCoordAsPos, unpackPos } from 'other/packrat'
 
 export class FastFiller extends Creep {
     travelToFastFiller?(): boolean {
-        const { room } = this
-
-        // Try to find a fastFillerPos, inform true if it failed
-
-        if (!this.findFastFillerPos()) return true
-
-        // Unpack the this's packedFastFillerPos
-
-        const fastFillerPos = unpackAsRoomPos(this.memory.packedPos, room.name)
+        const fastFillerPos = this.findFastFillerPos()
+        if (!fastFillerPos) return true
 
         // If the this is standing on the fastFillerPos, inform false
 
-        if (getRange(this.pos.x, fastFillerPos.x, this.pos.y, fastFillerPos.y) === 0) return false
+        if (getRangeOfCoords(this.pos, fastFillerPos) === 0) return false
 
         // Otherwise, make a move request to it
 
@@ -28,6 +22,33 @@ export class FastFiller extends Creep {
         // And inform true
 
         return true
+    }
+
+    findFastFillerPos?() {
+        const { room } = this
+
+        this.say('FFP')
+
+        // Stop if the creep already has a packedFastFillerPos
+
+        if (this.memory.PC) return unpackCoordAsPos(this.memory.PC, room.name)
+
+        // Get usedFastFillerPositions
+
+        const usedFastFillerPositions = room.usedFastFillerCoords
+
+        const openFastFillerPositions = room.fastFillerPositions.filter(
+            pos => !usedFastFillerPositions.has(packCoord(pos)),
+        )
+        if (!openFastFillerPositions.length) return false
+
+        const fastFillerPos = findClosestPos(this.pos, openFastFillerPositions)
+        const packedCoord = packCoord(fastFillerPos)
+
+        this.memory.PC = packedCoord
+        room._usedFastFillerCoords.add(packedCoord)
+
+        return fastFillerPos
     }
 
     fillFastFiller?(): boolean {
@@ -48,7 +69,10 @@ export class FastFiller extends Creep {
             }
         }
 
-        const fastFillerContainers = [room.fastFillerContainerLeft, room.fastFillerContainerRight]
+        const fastFillerContainers: StructureContainer[] = []
+
+        if (room.fastFillerContainerLeft) fastFillerContainers.push(room.fastFillerContainerLeft)
+        if (room.fastFillerContainerRight) fastFillerContainers.push(room.fastFillerContainerRight)
 
         // If all spawningStructures are filled, inform false
 
@@ -57,30 +81,19 @@ export class FastFiller extends Creep {
         // If the this needs resources
 
         if (this.needsResources()) {
-            // Get the sourceLinks
-
-            let fastFillerStoringStructures: (StructureContainer | StructureLink)[] = [room.fastFillerLink]
-            fastFillerStoringStructures = fastFillerStoringStructures.concat(fastFillerContainers)
-
-            let structures = fastFillerStoringStructures.length
-
-            // Loop through each fastFillerStoringStructure
-
-            for (const structure of fastFillerStoringStructures) {
-                // If the structure is undefined, iterate
-
-                if (!structure) {
-                    structures -= 1
-                    continue
-                }
+            for (let i = fastFillerContainers.length - 1; i >= 0; i--) {
+                const structure = fastFillerContainers[i]
 
                 // Otherwise, if the structure is not in range 1 to the this
 
-                if (getRange(this.pos.x, structure.pos.x, this.pos.y, structure.pos.y) > 1) continue
+                if (getRangeOfCoords(this.pos, structure.pos) > 1) {
+                    fastFillerContainers.splice(i, 1)
+                    continue
+                }
 
-                // If there is a non-energy resource in the structure
+                // If there is a non-energy resource in a container
 
-                if (structure.structureType != STRUCTURE_LINK && structure.usedStore() > structure.store.energy) {
+                if (structure.usedStore() > structure.store.energy) {
                     for (const key in structure.store) {
                         const resourceType = key as ResourceConstant
 
@@ -96,18 +109,33 @@ export class FastFiller extends Creep {
 
                 // Otherwise, if there is insufficient energy in the structure, iterate
 
-                if (
-                    structure.store.energy < this.freeSpecificStore(RESOURCE_ENERGY) ||
-                    structure.store.getUsedCapacity(RESOURCE_ENERGY) < this.freeSpecificStore(RESOURCE_ENERGY)
-                )
-                    continue
+                if (structure.store.getUsedCapacity(RESOURCE_ENERGY) < structure.store.getCapacity() * 0.5) continue
+
+                this.withdraw(structure, RESOURCE_ENERGY)
+                return true
+            }
+
+            let fastFillerStoringStructures: (StructureContainer | StructureLink)[] = []
+            if (room.fastFillerLink && room.fastFillerLink.RCLActionable)
+                fastFillerStoringStructures.push(room.fastFillerLink)
+            fastFillerStoringStructures = fastFillerStoringStructures.concat(fastFillerContainers)
+
+            // Loop through each fastFillerStoringStructure
+
+            for (const structure of fastFillerStoringStructures) {
+                // Otherwise, if the structure is not in range 1 to the this
+
+                if (getRangeOfCoords(this.pos, structure.pos) > 1) continue
+
+                // If there is a non-energy resource in the structure
+
+                if (structure.store.getUsedCapacity(RESOURCE_ENERGY) <= 0) continue
 
                 // Otherwise, withdraw from the structure and inform true
 
                 this.say('W')
 
                 this.withdraw(structure, RESOURCE_ENERGY)
-                structure.store.energy -= this.store.getCapacity() - this.store.energy
                 return true
             }
 
@@ -183,7 +211,7 @@ export class FastFiller extends Creep {
 
             if (creep.fillFastFiller()) continue
 
-            creep.advancedRenew()
+            creep.passiveRenew()
 
             /* creep.say('🚬') */
         }

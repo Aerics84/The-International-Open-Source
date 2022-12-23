@@ -1,7 +1,10 @@
 import {
     allStructureTypes,
-    allyList,
-    myColors,
+    defaultRoadPlanningPlainCost,
+    defaultSwampCost,
+    impassibleStructureTypes,
+    customColors,
+    remoteTypeWeights,
     roomDimensions,
     structureTypesByBuildPriority,
 } from 'international/constants'
@@ -12,13 +15,21 @@ import {
     findObjectWithID,
     findCoordsInsideRect,
     getRange,
-    pack,
-    packXY,
-    unpackAsPos,
-    unpackAsRoomPos,
-} from 'international/generalFunctions'
-import { internationalManager } from 'international/internationalManager'
-import { packCoordList, packPosList, unpackPosList } from 'other/packrat'
+    unpackNumAsCoord,
+    packAsNum,
+    packXYAsNum,
+    unpackNumAsPos,
+} from 'international/utils'
+import { internationalManager } from 'international/international'
+import {
+    packCoord,
+    packCoordList,
+    packPos,
+    packPosList,
+    packXYAsCoord,
+    unpackCoord,
+    unpackPosList,
+} from 'other/packrat'
 
 Object.defineProperties(Room.prototype, {
     global: {
@@ -34,7 +45,7 @@ Object.defineProperties(Room.prototype, {
 
             return (this._anchor =
                 this.memory.stampAnchors && this.memory.stampAnchors.fastFiller.length
-                    ? unpackAsRoomPos(this.memory.stampAnchors.fastFiller[0], this.name)
+                    ? unpackNumAsPos(this.memory.stampAnchors.fastFiller[0], this.name)
                     : undefined)
         },
     },
@@ -76,7 +87,7 @@ Object.defineProperties(Room.prototype, {
             if (this._sourcesByEfficacy) return this._sourcesByEfficacy
 
             this._sourcesByEfficacy = [].concat(this.sources)
-
+            console.log(this.name)
             return this._sourcesByEfficacy.sort((a, b) => {
                 return this.sourcePaths[a.index].length - this.sourcePaths[b.index].length
             })
@@ -93,8 +104,20 @@ Object.defineProperties(Room.prototype, {
         get() {
             if (this._enemyCreeps) return this._enemyCreeps
 
+            // If commune, only avoid ally creeps
+
+            if (this.memory.T === 'commune') {
+                return (this._enemyCreeps = this.find(FIND_HOSTILE_CREEPS, {
+                    filter: creep => !Memory.allyPlayers.includes(creep.owner.username),
+                }))
+            }
+
+            // In any other room avoid ally creeps and neutral creeps
+
             return (this._enemyCreeps = this.find(FIND_HOSTILE_CREEPS, {
-                filter: creep => !Memory.allyList.includes(creep.owner.username),
+                filter: creep =>
+                    !Memory.allyPlayers.includes(creep.owner.username) &&
+                    !Memory.nonAggressionPlayers.includes(creep.owner.username),
             }))
         },
     },
@@ -102,9 +125,17 @@ Object.defineProperties(Room.prototype, {
         get() {
             if (this._enemyAttackers) return this._enemyAttackers
 
-            return this.enemyCreeps.filter(function (creep) {
-                return creep.parts.attack + creep.parts.ranged_attack + creep.parts.work > 0
-            })
+            // If commune, only avoid ally creeps
+
+            if (this.memory.T === 'commune') {
+                return (this._enemyAttackers = this.enemyCreeps.filter(function (creep) {
+                    return creep.parts.attack + creep.parts.ranged_attack + creep.parts.work + creep.parts.heal > 0
+                }))
+            }
+
+            return (this._enemyAttackers = this.enemyCreeps.filter(function (creep) {
+                return creep.parts.attack + creep.parts.ranged_attack + creep.parts.heal > 0
+            }))
         },
     },
     allyCreeps: {
@@ -112,7 +143,7 @@ Object.defineProperties(Room.prototype, {
             if (this._allyCreeps) return this._allyCreeps
 
             return (this._allyCreeps = this.find(FIND_HOSTILE_CREEPS, {
-                filter: creep => Memory.allyList.includes(creep.owner.username),
+                filter: creep => Memory.allyPlayers.includes(creep.owner.username),
             }))
         },
     },
@@ -120,9 +151,20 @@ Object.defineProperties(Room.prototype, {
         get() {
             if (this._myDamagedCreeps) return this._myDamagedCreeps
 
-            return (this._myDamagedCreeps = this.find(FIND_MY_CREEPS, {
-                filter: creep => creep.hits < creep.hitsMax,
-            }))
+            return (this._myDamagedCreeps = this._myDamagedCreeps =
+                this.find(FIND_MY_CREEPS, {
+                    filter: creep => creep.hits < creep.hitsMax,
+                }))
+        },
+    },
+    myDamagedPowerCreeps: {
+        get() {
+            if (this._myDamagedPowerCreeps) return this._myDamagedPowerCreeps
+
+            return (this._myDamagedPowerCreeps = this._myDamagedPowerCreeps =
+                this.find(FIND_MY_POWER_CREEPS, {
+                    filter: creep => creep.hits < creep.hitsMax,
+                }))
         },
     },
     allyDamagedCreeps: {
@@ -154,6 +196,50 @@ Object.defineProperties(Room.prototype, {
             return this._structures
         },
     },
+    structureCoords: {
+        get() {
+            if (this._structureCoords) return this._structureCoords
+
+            // Construct storage of structures based on structureType
+
+            this._structureCoords = new Map()
+
+            // Group structures by structureType
+
+            for (const structure of this.find(FIND_STRUCTURES)) {
+                const packedCoord = packCoord(structure.pos)
+
+                const coordStructureIDs = this._structureCoords.get(packedCoord)
+                if (!coordStructureIDs) {
+                    this._structureCoords.set(packedCoord, [structure.id])
+                    continue
+                }
+                coordStructureIDs.push(structure.id)
+            }
+
+            return this._structureCoords
+        },
+    },
+    structureCoordsByType: {
+        get() {
+            if (this._structureCoordsByType) return this._structureCoordsByType
+
+            // Construct storage of structures based on structureType
+
+            this._structureCoordsByType = {}
+
+            // Make array keys for each structureType
+
+            for (const structureType of allStructureTypes) this._structureCoordsByType[structureType] = new Map()
+
+            // Group structures by structureType
+
+            for (const structure of this.find(FIND_STRUCTURES))
+                this._structureCoordsByType[structure.structureType].set(packCoord(structure.pos), structure.id)
+
+            return this._structureCoordsByType
+        },
+    },
     cSites: {
         get() {
             if (this._cSites) return this._cSites
@@ -175,8 +261,8 @@ Object.defineProperties(Room.prototype, {
     },
     cSiteTarget: {
         get() {
-            if (this.memory.cSiteTargetID) {
-                const cSiteTarget = findObjectWithID(this.memory.cSiteTargetID)
+            if (this.memory.CSTID) {
+                const cSiteTarget = findObjectWithID(this.memory.CSTID)
                 if (cSiteTarget) return cSiteTarget
             }
 
@@ -218,7 +304,7 @@ Object.defineProperties(Room.prototype, {
 
                 if (!target) target = findClosestObject(searchAnchor, cSitesOfType)
 
-                this.memory.cSiteTargetID = target.id
+                this.memory.CSTID = target.id
                 return target
             }
 
@@ -230,7 +316,7 @@ Object.defineProperties(Room.prototype, {
             if (this._enemyCSites) return this._enemyCSites
 
             return (this._enemyCSites = this.find(FIND_HOSTILE_CONSTRUCTION_SITES, {
-                filter: cSite => !Memory.allyList.includes(cSite.owner.username),
+                filter: cSite => !Memory.allyPlayers.includes(cSite.owner.username),
             }))
         },
     },
@@ -239,7 +325,7 @@ Object.defineProperties(Room.prototype, {
             if (this._allyCSites) return this._allyCSites
 
             return (this._allyCSites = this.find(FIND_HOSTILE_CONSTRUCTION_SITES, {
-                filter: cSite => Memory.allyList.includes(cSite.owner.username),
+                filter: cSite => Memory.allyPlayers.includes(cSite.owner.username),
             }))
         },
     },
@@ -318,6 +404,74 @@ Object.defineProperties(Room.prototype, {
             return this._spawningStructuresByNeed
         },
     },
+    dismantleTargets: {
+        get() {
+            if (this._dismantleTargets) return this._dismantleTargets
+
+            // We own the room, attack enemy owned structures
+
+            if (this.controller && this.controller.my) {
+                return (this._dismantleTargets = this.find(FIND_STRUCTURES, {
+                    filter: structure =>
+                        (structure as OwnedStructure).owner &&
+                        !(structure as OwnedStructure).my &&
+                        structure.structureType !== STRUCTURE_INVADER_CORE,
+                }))
+            }
+
+            // We don't own the room, attack things that we can that aren't roads or containers
+
+            return (this._dismantleTargets = this.find(FIND_STRUCTURES, {
+                filter: structure =>
+                    structure.structureType !== STRUCTURE_ROAD &&
+                    structure.structureType !== STRUCTURE_CONTAINER &&
+                    structure.structureType !== STRUCTURE_CONTROLLER &&
+                    structure.structureType !== STRUCTURE_INVADER_CORE &&
+                    structure.structureType !== STRUCTURE_KEEPER_LAIR &&
+                    // We don't want to attack respawn or novice zone walls with infinite hits
+
+                    structure.hits,
+            }))
+        },
+    },
+    destructableStructures: {
+        get() {
+            if (this._destructableStructures) return this._destructableStructures
+
+            return (this._dismantleTargets = this.find(FIND_STRUCTURES, {
+                filter: structure =>
+                    structure.structureType !== STRUCTURE_CONTROLLER &&
+                    structure.structureType !== STRUCTURE_INVADER_CORE,
+            }))
+        },
+    },
+    combatStructureTargets: {
+        get() {
+            if (this._combatStructureTargets) return this._combatStructureTargets
+
+            this._combatStructureTargets = []
+
+            if (this.controller && (this.controller.my || this.controller.reservation))
+                return this._combatStructureTargets
+
+            if (this.controller.owner && Memory.allyPlayers.includes(this.controller.owner.username))
+                return this._combatStructureTargets
+            if (this.controller.reservation && Memory.allyPlayers.includes(this.controller.reservation.username))
+                return this._combatStructureTargets
+
+            this._combatStructureTargets = this._combatStructureTargets.concat(this.structures.spawn)
+            this._combatStructureTargets = this._combatStructureTargets.concat(this.structures.tower)
+            this._combatStructureTargets = this._combatStructureTargets.concat(this.structures.extension)
+            this._combatStructureTargets = this._combatStructureTargets.concat(this.structures.storage)
+            this._combatStructureTargets = this._combatStructureTargets.concat(this.structures.terminal)
+            this._combatStructureTargets = this._combatStructureTargets.concat(this.structures.powerSpawn)
+            this._combatStructureTargets = this._combatStructureTargets.concat(this.structures.factory)
+            this._combatStructureTargets = this._combatStructureTargets.concat(this.structures.nuker)
+            this._combatStructureTargets = this._combatStructureTargets.concat(this.structures.observer)
+
+            return this._combatStructureTargets
+        },
+    },
     sourcePositions: {
         get() {
             if (this._sourcePositions && this._sourcePositions.length) return this._sourcePositions
@@ -334,35 +488,26 @@ Object.defineProperties(Room.prototype, {
             this._sourcePositions = []
 
             if (this.memory.T === 'remote') {
-                const commune = Game.rooms[this.memory.commune]
+                const commune = Game.rooms[this.memory.CN]
                 if (!commune) return []
 
-                const terrain = Game.map.getRoomTerrain(this.name)
-
                 const anchor = commune.anchor || new RoomPosition(25, 25, commune.name)
+
+                const terrainCoords = internationalManager.getTerrainCoords(this.name)
 
                 for (const source of this.sources) {
                     const positions = []
 
-                    // Find positions adjacent to source
-
-                    const adjacentPositions = findCoordsInsideRect(
-                        source.pos.x - 1,
-                        source.pos.y - 1,
-                        source.pos.x + 1,
-                        source.pos.y + 1,
-                    )
-
                     // Loop through each pos
 
-                    for (const coord of adjacentPositions) {
+                    for (const pos of this.findAdjacentPositions(source.pos.x, source.pos.y)) {
                         // Iterate if terrain for pos is a wall
 
-                        if (terrain.get(coord.x, coord.y) === TERRAIN_MASK_WALL) continue
+                        if (terrainCoords[packAsNum(pos)] === 255) continue
 
                         // Add pos to harvestPositions
 
-                        positions.push(new RoomPosition(coord.x, coord.y, this.name))
+                        positions.push(pos)
                     }
 
                     positions.sort((a, b) => {
@@ -387,30 +532,21 @@ Object.defineProperties(Room.prototype, {
 
             const anchor = this.anchor || new RoomPosition(25, 25, this.name)
 
-            const terrain = Game.map.getRoomTerrain(this.name)
+            const terrainCoords = internationalManager.getTerrainCoords(this.name)
 
             for (const source of this.sources) {
                 const positions = []
 
-                // Find positions adjacent to source
-
-                const adjacentPositions = findCoordsInsideRect(
-                    source.pos.x - 1,
-                    source.pos.y - 1,
-                    source.pos.x + 1,
-                    source.pos.y + 1,
-                )
-
                 // Loop through each pos
 
-                for (const coord of adjacentPositions) {
+                for (const pos of this.findAdjacentPositions(source.pos.x, source.pos.y)) {
                     // Iterate if terrain for pos is a wall
 
-                    if (terrain.get(coord.x, coord.y) === TERRAIN_MASK_WALL) continue
+                    if (terrainCoords[packAsNum(pos)] === 255) continue
 
                     // Add pos to harvestPositions
 
-                    positions.push(new RoomPosition(coord.x, coord.y, this.name))
+                    positions.push(pos)
                 }
 
                 positions.sort((a, b) => {
@@ -447,9 +583,9 @@ Object.defineProperties(Room.prototype, {
                 if (this.sources.length >= 2) harvesterNames = harvesterNames.concat(this.myCreeps.source2Harvester)
                 harvesterNames = harvesterNames.concat(this.myCreeps.vanguard)
             } else {
-                harvesterNames = this.myCreeps.source1RemoteHarvester
+                harvesterNames = this.myCreeps.remoteSourceHarvester0
                 if (this.sources.length >= 2)
-                    harvesterNames = harvesterNames.concat(this.myCreeps.source2RemoteHarvester)
+                    harvesterNames = harvesterNames.concat(this.myCreeps.remoteSourceHarvester1)
             }
 
             for (const creepName of harvesterNames) {
@@ -463,11 +599,11 @@ Object.defineProperties(Room.prototype, {
 
                 if (creep.memory.SI === undefined) continue
 
-                if (!creep.memory.packedPos) continue
+                if (!creep.memory.PC) continue
 
                 // If the creep has a packedHarvestPos, record it in usedHarvestPositions
 
-                this._usedSourceCoords[creep.memory.SI].add(creep.memory.packedPos)
+                this._usedSourceCoords[creep.memory.SI].add(creep.memory.PC)
             }
 
             return this._usedSourceCoords
@@ -475,43 +611,101 @@ Object.defineProperties(Room.prototype, {
     },
     sourcePaths: {
         get() {
-            if (this._sourcePaths?.length) return this._sourcePaths
+            if (this._sourcePaths && this._sourcePaths.length) return this._sourcePaths
 
             this._sourcePaths = []
 
-            if (this.global.sourcePaths?.length) {
-                for (const path of this.global.sourcePaths) this._sourcePaths.push(unpackPosList(path))
+            if (this.memory.SPs && this.memory.SPs.length) {
+                for (const path of this.memory.SPs) this._sourcePaths.push(unpackPosList(path))
 
                 return this._sourcePaths
             }
 
-            this.global.sourcePaths = []
+            this.memory.SPs = []
 
             if (this.memory.T === 'remote') {
-                const commune = Game.rooms[this.memory.commune]
+                const commune = Game.rooms[this.memory.CN]
                 if (!commune) return []
 
-                for (const source of this.sources) {
+                const sources = []
+                    .concat(this.sourcePositions)
+                    .sort((a, b) => {
+                        return (
+                            this.advancedFindPath({
+                                origin: a[0],
+                                goals: [{ pos: commune.anchor, range: 4 }],
+                                typeWeights: remoteTypeWeights,
+                                plainCost: defaultRoadPlanningPlainCost,
+                                weightStructurePlans: true,
+                                avoidStationaryPositions: true,
+                            }).length -
+                            this.advancedFindPath({
+                                origin: b[0],
+                                goals: [{ pos: commune.anchor, range: 4 }],
+                                typeWeights: remoteTypeWeights,
+                                plainCost: defaultRoadPlanningPlainCost,
+                                weightStructurePlans: true,
+                                avoidStationaryPositions: true,
+                            }).length
+                        )
+                    })
+                    .reverse()
+
+                for (let index in sources) {
                     const path = this.advancedFindPath({
-                        origin: source.pos,
-                        goals: [{ pos: commune.anchor, range: 3 }],
+                        origin: this.sourcePositions[index][0],
+                        goals: [{ pos: commune.anchor, range: 4 }],
+                        typeWeights: remoteTypeWeights,
+                        plainCost: defaultRoadPlanningPlainCost,
+                        weightStructurePlans: true,
+                        avoidStationaryPositions: true,
                     })
 
-                    this._sourcePaths.push(path)
-                    this.global.sourcePaths.push(packPosList(path))
+                    this._sourcePaths[index] = path
+                    this.memory.SPs[index] = packPosList(path)
                 }
 
                 return this._sourcePaths
             }
 
-            for (const source of this.sources) {
+            if (!this.anchor) return this._sourcePaths
+
+            const sources = []
+                .concat(this.sourcePositions)
+                .sort((a, b) => {
+                    return (
+                        this.advancedFindPath({
+                            origin: a[0],
+                            goals: [{ pos: this.anchor, range: 4 }],
+                            typeWeights: remoteTypeWeights,
+                            plainCost: defaultRoadPlanningPlainCost,
+                            weightStructurePlans: true,
+                            avoidStationaryPositions: true,
+                        }).length -
+                        this.advancedFindPath({
+                            origin: b[0],
+                            goals: [{ pos: this.anchor, range: 4 }],
+                            typeWeights: remoteTypeWeights,
+                            plainCost: defaultRoadPlanningPlainCost,
+                            weightStructurePlans: true,
+                            avoidStationaryPositions: true,
+                        }).length
+                    )
+                })
+                .reverse()
+
+            for (let index in sources) {
                 const path = this.advancedFindPath({
-                    origin: source.pos,
-                    goals: [{ pos: this.anchor, range: 3 }],
+                    origin: this.sourcePositions[index][0],
+                    goals: [{ pos: this.anchor, range: 4 }],
+                    typeWeights: remoteTypeWeights,
+                    plainCost: defaultRoadPlanningPlainCost,
+                    weightStructurePlans: true,
+                    avoidStationaryPositions: true,
                 })
 
-                this._sourcePaths.push(path)
-                this.global.sourcePaths.push(packPosList(path))
+                this._sourcePaths[index] = path
+                this.memory.SPs[index] = packPosList(path)
             }
 
             return this._sourcePaths
@@ -529,32 +723,30 @@ Object.defineProperties(Room.prototype, {
             const { controller } = this
 
             if (this.memory.T === 'remote') {
-                const commune = Game.rooms[this.memory.commune]
+                const commune = Game.rooms[this.memory.CN]
                 if (!commune) return undefined
 
-                const terrain = Game.map.getRoomTerrain(this.name)
+                const terrainCoords = internationalManager.getTerrainCoords(this.name)
 
                 const anchor = commune.anchor || new RoomPosition(25, 25, commune.name)
 
                 // Find positions adjacent to source
 
-                const adjacentPositions = findCoordsInsideRect(
+                const adjacentPositions = this.findPositionsInsideRect(
                     controller.pos.x - 1,
                     controller.pos.y - 1,
                     controller.pos.x + 1,
                     controller.pos.y + 1,
                 )
 
-                // Loop through each pos
-
-                for (const coord of adjacentPositions) {
+                for (const pos of adjacentPositions) {
                     // Iterate if terrain for pos is a wall
 
-                    if (terrain.get(coord.x, coord.y) === TERRAIN_MASK_WALL) continue
+                    if (terrainCoords[packAsNum(pos)] === 255) continue
 
                     // Add pos to harvestPositions
 
-                    this._controllerPositions.push(new RoomPosition(coord.x, coord.y, this.name))
+                    this._controllerPositions.push(pos)
                 }
 
                 this._controllerPositions.sort((a, b) => {
@@ -576,27 +768,25 @@ Object.defineProperties(Room.prototype, {
 
             const anchor = this.anchor || new RoomPosition(25, 25, this.name)
 
-            const terrain = Game.map.getRoomTerrain(this.name)
+            const terrainCoords = internationalManager.getTerrainCoords(this.name)
 
             // Find positions adjacent to source
 
-            const adjacentPositions = findCoordsInsideRect(
+            const adjacentPositions = this.findPositionsInsideRect(
                 controller.pos.x - 1,
                 controller.pos.y - 1,
                 controller.pos.x + 1,
                 controller.pos.y + 1,
             )
 
-            // Loop through each pos
-
-            for (const coord of adjacentPositions) {
+            for (const pos of adjacentPositions) {
                 // Iterate if terrain for pos is a wall
 
-                if (terrain.get(coord.x, coord.y) === TERRAIN_MASK_WALL) continue
+                if (terrainCoords[packAsNum(pos)] === 255) continue
 
                 // Add pos to harvestPositions
 
-                this._controllerPositions.push(new RoomPosition(coord.x, coord.y, this.name))
+                this._controllerPositions.push(pos)
             }
 
             this._controllerPositions.sort((a, b) => {
@@ -616,13 +806,133 @@ Object.defineProperties(Room.prototype, {
             return this._controllerPositions
         },
     },
+    centerUpgradePos: {
+        get() {
+            if (this.global.centerUpgradePos !== undefined) return this.global.centerUpgradePos
+
+            if (!this.anchor) return false
+
+            // Get the open areas in a range of 3 to the controller
+
+            const distanceCoords = this.distanceTransform(
+                undefined,
+                false,
+                255,
+                this.controller.pos.x - 2,
+                this.controller.pos.y - 2,
+                this.controller.pos.x + 2,
+                this.controller.pos.y + 2,
+            )
+
+            // Find the closest value greater than two to the centerUpgradePos and inform it
+
+            return (this.global.centerUpgradePos = this.findClosestPosOfValue({
+                coordMap: distanceCoords,
+                startCoords: [this.anchor],
+                requiredValue: 2,
+                reduceIterations: 1,
+                visuals: false,
+                cardinalFlood: true,
+            }))
+        },
+    },
+    upgradePositions: {
+        get() {
+            if (this.global.upgradePositions) return this.global.upgradePositions
+
+            // Get the center upgrade pos, stopping if it's undefined
+
+            const centerUpgradePos = this.centerUpgradePos
+            if (!centerUpgradePos) return []
+
+            const anchor = this.anchor
+            if (!anchor) return []
+
+            this.global.upgradePositions = []
+
+            // Find terrain in room
+
+            const terrainCoords = internationalManager.getTerrainCoords(this.name)
+
+            // Find positions adjacent to source
+
+            const adjacentPositions = this.findAdjacentPositions(centerUpgradePos.x, centerUpgradePos.y)
+
+            // Loop through each pos
+
+            for (const pos of adjacentPositions) {
+                // Iterate if terrain for pos is a wall
+
+                if (terrainCoords[packAsNum(pos)] === 255) continue
+
+                // Add pos to harvestPositions
+
+                this.global.upgradePositions.push(pos)
+            }
+
+            this.global.upgradePositions.sort((a, b) => {
+                return (
+                    this.advancedFindPath({
+                        origin: a,
+                        goals: [{ pos: anchor, range: 3 }],
+                    }).length -
+                    this.advancedFindPath({
+                        origin: b,
+                        goals: [{ pos: anchor, range: 3 }],
+                    }).length
+                )
+            })
+
+            // Make the closest pos the last to be chosen
+
+            this.global.upgradePositions.push(this.global.upgradePositions.shift())
+
+            this.global.upgradePositions.splice(0, 0, centerUpgradePos)
+
+            return this.global.upgradePositions
+        },
+    },
+    usedUpgradePositions: {
+        get() {
+            if (this._usedUpgradePositions) return this._usedUpgradePositions
+
+            this._usedUpgradePositions = new Set()
+
+            for (const creepName of this.myCreeps.controllerUpgrader) {
+                // Get the creep using its name
+
+                const creep = Game.creeps[creepName]
+
+                // If the creep is dying, iterate
+
+                if (creep.dying) continue
+
+                if (!creep.memory.PC) continue
+
+                // The creep has a packedPos
+
+                this._usedUpgradePositions.add(creep.memory.PC)
+            }
+
+            if (this.controllerLink) this._usedUpgradePositions.add(packPos(this.controllerLink.pos))
+            /*
+            for (const packedCoord of this._usedUpgradePositions) {
+
+                const coord = unpackCoord(packedCoord)
+
+                this.visual.circle(coord.x, coord.y, { fill: customColors.red })
+            }
+ */
+            return this._usedUpgradePositions
+        },
+    },
     upgradePathLength: {
         get() {
             if (this.global.upgradePathLength) return this.global.upgradePathLength
 
             if (!this.anchor) return 0
 
-            const centerUpgradePos = this.get('centerUpgradePos')
+            const centerUpgradePos = this.centerUpgradePos
 
             if (!centerUpgradePos) return 0
 
@@ -632,6 +942,179 @@ Object.defineProperties(Room.prototype, {
             }).length)
         },
     },
+    mineralPositions: {
+        get() {
+            if (this._mineralPositions) return this._mineralPositions
+
+            if (this.memory.MP) {
+                return (this._mineralPositions = unpackPosList(this.memory.MP))
+            }
+
+            const anchor = this.anchor || new RoomPosition(25, 25, this.name)
+            if (!anchor) return []
+
+            this._mineralPositions = []
+            const mineralPos = this.mineral.pos
+
+            // Find positions adjacent to source
+
+            const adjacentPositions = this.findPositionsInsideRect(
+                mineralPos.x - 1,
+                mineralPos.y - 1,
+                mineralPos.x + 1,
+                mineralPos.y + 1,
+            )
+
+            const terrainCoords = internationalManager.getTerrainCoords(this.name)
+
+            // Loop through each pos
+
+            for (const pos of adjacentPositions) {
+                // Iterate if terrain for pos is a wall
+
+                if (terrainCoords[packAsNum(pos)] === 255) continue
+
+                // Add pos to harvestPositions
+
+                this._mineralPositions.push(pos)
+            }
+
+            this._mineralPositions.sort((a, b) => {
+                return (
+                    this.advancedFindPath({
+                        origin: a,
+                        goals: [{ pos: anchor, range: 3 }],
+                    }).length -
+                    this.advancedFindPath({
+                        origin: b,
+                        goals: [{ pos: anchor, range: 3 }],
+                    }).length
+                )
+            })
+
+            this.memory.MP = packPosList(this._mineralPositions)
+            return this._mineralPositions
+        },
+    },
+    usedMineralCoords: {
+        get() {
+            if (this._usedMineralCoords) return this._usedMineralCoords
+
+            this._usedMineralCoords = new Set()
+
+            for (const creepName of this.myCreeps.mineralHarvester) {
+                // Get the creep using its name
+
+                const creep = Game.creeps[creepName]
+
+                // If the creep is dying, iterate
+
+                if (creep.dying) continue
+
+                if (!creep.memory.PC) continue
+
+                // The creep has a packedPos
+
+                this._usedMineralCoords.add(creep.memory.PC)
+            }
+
+            return this._usedMineralCoords
+        },
+    },
+    fastFillerPositions: {
+        get() {
+            if (this._fastFillerPositions) return this._fastFillerPositions
+
+            const anchor = this.anchor
+            if (!anchor) return []
+
+            this._fastFillerPositions = []
+
+            const rawFastFillerPositions = [
+                new RoomPosition(anchor.x - 1, anchor.y - 1, this.name),
+                new RoomPosition(anchor.x - 1, anchor.y + 1, this.name),
+                new RoomPosition(anchor.x + 1, anchor.y - 1, this.name),
+                new RoomPosition(anchor.x + 1, anchor.y + 1, this.name),
+            ]
+
+            for (let index = rawFastFillerPositions.length - 1; index >= 0; index -= 1) {
+                // Get the pos using the index
+
+                const pos = rawFastFillerPositions[index]
+
+                // Get adjacent structures
+
+                const adjacentStructures = this.lookForAtArea(
+                    LOOK_STRUCTURES,
+                    pos.y - 1,
+                    pos.x - 1,
+                    pos.y + 1,
+                    pos.x + 1,
+                    true,
+                )
+
+                // Construct organized adjacent structures
+
+                const adjacentStructuresByType: Partial<Record<StructureConstant, number>> = {
+                    spawn: 0,
+                    extension: 0,
+                    container: 0,
+                    link: 0,
+                }
+
+                // For each structure of adjacentStructures
+
+                for (const adjacentPosData of adjacentStructures) {
+                    // Get the structureType at the adjacentPos
+
+                    const { structureType } = adjacentPosData.structure
+
+                    if (adjacentStructuresByType[structureType] === undefined) continue
+
+                    // Increase structure amount for this structureType on the adjacentPos
+
+                    adjacentStructuresByType[structureType] += 1
+                }
+
+                // If there is more than one adjacent extension and container, iterate
+
+                if (adjacentStructuresByType[STRUCTURE_CONTAINER] + adjacentStructuresByType[STRUCTURE_LINK] === 0)
+                    continue
+
+                if (adjacentStructuresByType[STRUCTURE_SPAWN] + adjacentStructuresByType[STRUCTURE_EXTENSION] === 0)
+                    continue
+
+                this._fastFillerPositions.push(pos)
+            }
+
+            return this._fastFillerPositions
+        },
+    },
+    usedFastFillerCoords: {
+        get() {
+            if (this._usedFastFillerCoords) return this._usedFastFillerCoords
+
+            this._usedFastFillerCoords = new Set()
+
+            for (const creepName of this.myCreeps.fastFiller) {
+                // Get the creep using its name
+
+                const creep = Game.creeps[creepName]
+
+                // If the creep is dying, iterate
+
+                if (creep.dying) continue
+
+                if (!creep.memory.PC) continue
+
+                // The creep has a packedPos
+
+                this._usedFastFillerCoords.add(creep.memory.PC)
+            }
+
+            return this._usedFastFillerCoords
+        },
+    },
     remoteNamesBySourceEfficacy: {
         get() {
             if (this._remoteNamesBySourceEfficacy) return this._remoteNamesBySourceEfficacy
@@ -639,15 +1122,15 @@ Object.defineProperties(Room.prototype, {
             // Filter rooms that have some sourceEfficacies recorded
 
             this._remoteNamesBySourceEfficacy = this.memory.remotes.filter(function (roomName) {
-                return Memory.rooms[roomName].SE.length
+                return Memory.rooms[roomName].SPs.length
             })
 
             // Sort the remotes based on the average source efficacy
 
             return this._remoteNamesBySourceEfficacy.sort(function (a1, b1) {
                 return (
-                    Memory.rooms[a1].SE.reduce((a2, b2) => a2 + b2) / Memory.rooms[a1].SE.length -
-                    Memory.rooms[b1].SE.reduce((a2, b2) => a2 + b2) / Memory.rooms[b1].SE.length
+                    Memory.rooms[a1].SPs.reduce((a2, b2) => a2 + b2.length, 0) / Memory.rooms[a1].SPs.length -
+                    Memory.rooms[b1].SPs.reduce((a2, b2) => a2 + b2.length, 0) / Memory.rooms[b1].SPs.length
                 )
             })
         },
@@ -658,22 +1141,22 @@ Object.defineProperties(Room.prototype, {
 
             this._remoteSourceIndexesByEfficacy = []
 
-            for (let remoteIndex = 0; remoteIndex < this.memory.remotes.length; remoteIndex++) {
-                const remoteName = this.memory.remotes[remoteIndex]
+            for (const remoteName of this.memory.remotes) {
                 const remoteMemory = Memory.rooms[remoteName]
 
                 for (let sourceIndex = 0; sourceIndex < remoteMemory.SIDs.length; sourceIndex++) {
-
                     this._remoteSourceIndexesByEfficacy.push(remoteName + ' ' + sourceIndex)
                 }
             }
 
-            return this._remoteSourceIndexesByEfficacy.sort(function(a, b) {
-
+            return this._remoteSourceIndexesByEfficacy.sort(function (a, b) {
                 const aSplit = a.split(' ')
                 const bSplit = b.split(' ')
 
-                return Memory.rooms[aSplit[0]].SE[parseInt(aSplit[1])] - Memory.rooms[bSplit[0]].SE[parseInt(bSplit[1])]
+                return (
+                    Memory.rooms[aSplit[0]].SPs[parseInt(aSplit[1])].length -
+                    Memory.rooms[bSplit[0]].SPs[parseInt(bSplit[1])].length
+                )
             })
         },
     },
@@ -804,7 +1287,7 @@ Object.defineProperties(Room.prototype, {
                 if (container) return container
             }
 
-            const centerUpgradePos: RoomPosition = this.get('centerUpgradePos')
+            const centerUpgradePos = this.centerUpgradePos
             if (!centerUpgradePos) return false
 
             for (const structure of centerUpgradePos.lookFor(LOOK_STRUCTURES)) {
@@ -825,7 +1308,7 @@ Object.defineProperties(Room.prototype, {
                 if (container) return container
             }
 
-            const mineralHarvestPos: RoomPosition = this.get('closestMineralHarvestPos')
+            const mineralHarvestPos = this.mineralPositions[0]
             if (!mineralHarvestPos) return false
 
             for (const structure of mineralHarvestPos.lookFor(LOOK_STRUCTURES)) {
@@ -846,8 +1329,7 @@ Object.defineProperties(Room.prototype, {
                 if (container) return container
             }
 
-            const centerUpgradePos = this.get('centerUpgradePos')
-
+            const centerUpgradePos = this.centerUpgradePos
             if (!centerUpgradePos) return false
 
             for (const structure of centerUpgradePos.lookFor(LOOK_STRUCTURES)) {
@@ -890,7 +1372,7 @@ Object.defineProperties(Room.prototype, {
 
             if (!this.memory.stampAnchors.hub) return false
 
-            const hubAnchor = unpackAsPos(this.memory.stampAnchors.hub[0])
+            const hubAnchor = unpackNumAsCoord(this.memory.stampAnchors.hub[0])
             if (!hubAnchor) return false
             //console.log(JSON.stringify(hubAnchor))
             for (const structure of new RoomPosition(hubAnchor.x, hubAnchor.y + 1, this.name).lookFor(
@@ -924,7 +1406,18 @@ Object.defineProperties(Room.prototype, {
             if (this._droppedEnergy) return this._droppedEnergy
 
             return (this._droppedEnergy = this.find(FIND_DROPPED_RESOURCES, {
-                filter: resource => resource.resourceType === RESOURCE_ENERGY,
+                filter: resource =>
+                    resource.resourceType === RESOURCE_ENERGY &&
+                    !resource.room.enemyThreatCoords.has(packCoord(resource.pos)),
+            }))
+        },
+    },
+    droppedResources: {
+        get() {
+            if (this._droppedResources) return this._droppedResources
+
+            return (this._droppedResources = this.find(FIND_DROPPED_RESOURCES, {
+                filter: resource => !resource.room.enemyThreatCoords.has(packCoord(resource.pos)),
             }))
         },
     },
@@ -937,22 +1430,644 @@ Object.defineProperties(Room.prototype, {
             }))
         },
     },
+    quadCostMatrix: {
+        get() {
+            if (this._quadCostMatrix) return this._quadCostMatrix
+
+            const terrainCoords = new Uint8Array(internationalManager.getTerrainCoords(this.name))
+            this._quadCostMatrix = new PathFinder.CostMatrix()
+
+            const roadCoods = new Set()
+            for (const road of this.structures.road) roadCoods.add(packCoord(road.pos))
+
+            // Avoid not my creeps
+
+            for (const creep of this.enemyCreeps) terrainCoords[packAsNum(creep.pos)] = 255
+            for (const creep of this.allyCreeps) terrainCoords[packAsNum(creep.pos)] = 255
+
+            for (const creep of this.find(FIND_HOSTILE_POWER_CREEPS)) terrainCoords[packAsNum(creep.pos)] = 255
+
+            // Avoid impassible structures
+
+            for (const rampart of this.structures.rampart) {
+                // If the rampart is mine
+
+                if (rampart.my) continue
+
+                // Otherwise if the rampart is owned by an ally, iterate
+
+                if (rampart.isPublic) continue
+
+                // Otherwise set the rampart's pos as impassible
+
+                terrainCoords[packAsNum(rampart.pos)] = 255
+            }
+
+            // Loop through structureTypes of impassibleStructureTypes
+
+            for (const structureType of impassibleStructureTypes) {
+                for (const structure of this.structures[structureType]) {
+                    // Set pos as impassible
+
+                    terrainCoords[packAsNum(structure.pos)] = 255
+                }
+
+                for (const cSite of this.cSites[structureType]) {
+                    // Set pos as impassible
+
+                    terrainCoords[packAsNum(cSite.pos)] = 255
+                }
+            }
+
+            //
+
+            for (const portal of this.structures.portal) terrainCoords[packAsNum(portal.pos)] = 255
+
+            // Loop trough each construction site belonging to an ally
+
+            for (const cSite of this.allyCSites) terrainCoords[packAsNum(cSite.pos)] = 255
+
+            let x
+
+            // Configure y and loop through top exits
+
+            let y = 0
+            for (x = 0; x < roomDimensions; x += 1)
+                terrainCoords[packXYAsNum(x, y)] = Math.max(terrainCoords[packXYAsNum(x, y)], 254)
+
+            // Configure x and loop through left exits
+
+            x = 0
+            for (y = 0; y < roomDimensions; y += 1)
+                terrainCoords[packXYAsNum(x, y)] = Math.max(terrainCoords[packXYAsNum(x, y)], 254)
+
+            // Configure y and loop through bottom exits
+
+            y = roomDimensions - 1
+            for (x = 0; x < roomDimensions; x += 1)
+                terrainCoords[packXYAsNum(x, y)] = Math.max(terrainCoords[packXYAsNum(x, y)], 254)
+
+            // Configure x and loop through right exits
+
+            x = roomDimensions - 1
+            for (y = 0; y < roomDimensions; y += 1)
+                terrainCoords[packXYAsNum(x, y)] = Math.max(terrainCoords[packXYAsNum(x, y)], 254)
+
+            const terrainCM = this.getTerrain()
+
+            // Assign impassible to tiles that aren't 2x2 passible
+
+            for (let x = 0; x < roomDimensions; x += 1) {
+                for (let y = 0; y < roomDimensions; y += 1) {
+                    const offsetCoords = [
+                        {
+                            x,
+                            y,
+                        },
+                        {
+                            x: x + 1,
+                            y,
+                        },
+                        {
+                            x,
+                            y: y + 1,
+                        },
+                        {
+                            x: x + 1,
+                            y: y + 1,
+                        },
+                    ]
+
+                    let largestValue = terrainCoords[packXYAsNum(x, y)]
+
+                    for (const coord of offsetCoords) {
+                        let coordValue = terrainCoords[packAsNum(coord)]
+                        if (!coordValue || coordValue < 254) continue
+
+                        if (roadCoods.has(packCoord(coord))) coordValue = 0
+
+                        largestValue = Math.max(largestValue, coordValue)
+                    }
+
+                    if (largestValue >= 254) {
+                        this._quadCostMatrix.set(x, y, 254)
+
+                        this._quadCostMatrix.set(
+                            x,
+                            y,
+                            Math.max(terrainCoords[packXYAsNum(x, y)], Math.min(largestValue, 254)),
+                        )
+                        continue
+                    }
+
+                    largestValue = 0
+
+                    for (const coord of offsetCoords) {
+                        const value = terrainCM.get(coord.x, coord.y)
+
+                        if (roadCoods.has(packCoord(coord))) continue
+                        if (value !== TERRAIN_MASK_SWAMP) continue
+
+                        largestValue = defaultSwampCost * 2
+                    }
+
+                    if (!largestValue) continue
+
+                    for (const coord of offsetCoords) {
+                        this._quadCostMatrix.set(coord.x, coord.y, largestValue)
+                    }
+                }
+            }
+
+            /* this.visualizeCostMatrix(this._quadCostMatrix, true) */
+
+            return this._quadCostMatrix
+        },
+    },
+    quadBulldozeCostMatrix: {
+        get() {
+            if (this._quadBulldozeCostMatrix) return this._quadBulldozeCostMatrix
+
+            const terrainCoords = new Uint8Array(internationalManager.getTerrainCoords(this.name))
+            this._quadBulldozeCostMatrix = new PathFinder.CostMatrix()
+
+            const roadCoods = new Set()
+            for (const road of this.structures.road) roadCoods.add(packCoord(road.pos))
+
+            // Avoid not my creeps
+            /*
+            for (const creep of this.enemyCreeps) terrainCoords[packAsNum(creep.pos)] = 255
+            for (const creep of this.allyCreeps) terrainCoords[packAsNum(creep.pos)] = 255
+
+            for (const creep of this.find(FIND_HOSTILE_POWER_CREEPS)) terrainCoords[packAsNum(creep.pos)] = 255
+ */
+            // Avoid impassible structures
+
+            for (const rampart of this.structures.rampart) {
+                // If the rampart is mine
+
+                if (rampart.my) continue
+
+                // Otherwise set the rampart's pos as impassible
+
+                terrainCoords[packAsNum(rampart.pos)] = 254 /* rampart.hits / (rampart.hitsMax / 200) */
+            }
+
+            // Loop through structureTypes of impassibleStructureTypes
+
+            for (const structureType of impassibleStructureTypes) {
+                for (const structure of this.structures[structureType]) {
+                    terrainCoords[packAsNum(structure.pos)] = 10 /* structure.hits / (structure.hitsMax / 10) */
+                }
+
+                for (const cSite of this.cSites[structureType]) {
+                    // Set pos as impassible
+
+                    terrainCoords[packAsNum(cSite.pos)] = 255
+                }
+            }
+
+            //
+
+            for (const portal of this.structures.portal) terrainCoords[packAsNum(portal.pos)] = 255
+
+            // Loop trough each construction site belonging to an ally
+
+            for (const cSite of this.allyCSites) terrainCoords[packAsNum(cSite.pos)] = 255
+
+            let x
+
+            // Configure y and loop through top exits
+
+            let y = 0
+            for (x = 0; x < roomDimensions; x += 1)
+                terrainCoords[packXYAsNum(x, y)] = Math.max(terrainCoords[packXYAsNum(x, y)], 254)
+
+            // Configure x and loop through left exits
+
+            x = 0
+            for (y = 0; y < roomDimensions; y += 1)
+                terrainCoords[packXYAsNum(x, y)] = Math.max(terrainCoords[packXYAsNum(x, y)], 254)
+
+            // Configure y and loop through bottom exits
+
+            y = roomDimensions - 1
+            for (x = 0; x < roomDimensions; x += 1)
+                terrainCoords[packXYAsNum(x, y)] = Math.max(terrainCoords[packXYAsNum(x, y)], 254)
+
+            // Configure x and loop through right exits
+
+            x = roomDimensions - 1
+            for (y = 0; y < roomDimensions; y += 1)
+                terrainCoords[packXYAsNum(x, y)] = Math.max(terrainCoords[packXYAsNum(x, y)], 254)
+
+            const terrainCM = this.getTerrain()
+
+            // Assign impassible to tiles that aren't 2x2 passible
+
+            for (let x = 0; x < roomDimensions; x += 1) {
+                for (let y = 0; y < roomDimensions; y += 1) {
+                    const offsetCoords = [
+                        {
+                            x,
+                            y,
+                        },
+                        {
+                            x: x + 1,
+                            y,
+                        },
+                        {
+                            x,
+                            y: y + 1,
+                        },
+                        {
+                            x: x + 1,
+                            y: y + 1,
+                        },
+                    ]
+
+                    let largestValue = terrainCoords[packXYAsNum(x, y)]
+
+                    for (const coord of offsetCoords) {
+                        let coordValue = terrainCoords[packAsNum(coord)]
+                        if (!coordValue || coordValue < 254) continue
+
+                        if (roadCoods.has(packCoord(coord))) coordValue = 0
+
+                        largestValue = Math.max(largestValue, coordValue)
+                    }
+
+                    if (largestValue >= 254) {
+                        this._quadBulldozeCostMatrix.set(x, y, 254)
+
+                        this._quadBulldozeCostMatrix.set(
+                            x,
+                            y,
+                            Math.max(terrainCoords[packXYAsNum(x, y)], Math.min(largestValue, 254)),
+                        )
+                        continue
+                    }
+
+                    largestValue = 0
+
+                    for (const coord of offsetCoords) {
+                        const value = terrainCM.get(coord.x, coord.y)
+
+                        if (roadCoods.has(packCoord(coord))) continue
+                        if (value !== TERRAIN_MASK_SWAMP) continue
+
+                        largestValue = defaultSwampCost * 2
+                    }
+
+                    if (!largestValue) continue
+
+                    for (const coord of offsetCoords) {
+                        this._quadBulldozeCostMatrix.set(coord.x, coord.y, largestValue)
+                    }
+                }
+            }
+
+            /* this.visualizeCostMatrix(this._quadBulldozeCostMatrix) */
+
+            return this._quadBulldozeCostMatrix
+        },
+    },
+    enemyDamageThreat: {
+        get() {
+            if (this._enemyDamageThreat !== undefined) return this._enemyDamageThreat
+
+            if (this.controller && !this.controller.my && this.structures.tower.length)
+                return (this._enemyDamageThreat = true)
+
+            for (const enemyAttacker of this.enemyAttackers) {
+                if (!enemyAttacker.combatStrength.melee && !enemyAttacker.combatStrength.ranged) continue
+
+                return (this._enemyDamageThreat = true)
+            }
+
+            return (this._enemyDamageThreat = false)
+        },
+    },
+    enemyThreatCoords: {
+        get() {
+            if (this._enemyThreatCoords) return this._enemyThreatCoords
+
+            this._enemyThreatCoords = new Set()
+
+            // If there is a controller, it's mine, and it's in safemode
+
+            if (this.controller && this.controller.my && this.controller.safeMode) return this._enemyThreatCoords
+
+            // If there is no enemy threat
+
+            if (!this.enemyAttackers.length) return this._enemyThreatCoords
+
+            const enemyAttackers: Creep[] = []
+            const enemyRangedAttackers: Creep[] = []
+
+            for (const enemyCreep of this.enemyAttackers) {
+                if (enemyCreep.parts.ranged_attack) {
+                    enemyRangedAttackers.push(enemyCreep)
+                    continue
+                }
+
+                if (enemyCreep.parts.attack > 0) enemyAttackers.push(enemyCreep)
+            }
+
+            for (const enemyAttacker of enemyAttackers) {
+                // Construct rect and get positions inside
+
+                const coords = findCoordsInsideRect(
+                    enemyAttacker.pos.x - 2,
+                    enemyAttacker.pos.y - 2,
+                    enemyAttacker.pos.x + 2,
+                    enemyAttacker.pos.y + 2,
+                )
+
+                for (const coord of coords) this._enemyThreatCoords.add(packCoord(coord))
+            }
+
+            for (const enemyAttacker of enemyRangedAttackers) {
+                // Construct rect and get positions inside
+
+                const coords = findCoordsInsideRect(
+                    enemyAttacker.pos.x - 3,
+                    enemyAttacker.pos.y - 3,
+                    enemyAttacker.pos.x + 3,
+                    enemyAttacker.pos.y + 3,
+                )
+
+                for (const coord of coords) this._enemyThreatCoords.add(packCoord(coord))
+            }
+
+            for (const rampart of this.structures.rampart) {
+                if (!rampart.my) continue
+                if (rampart.hits < 3000) continue
+
+                this._enemyThreatCoords.delete(packCoord(rampart.pos))
+            }
+            /*
+            for (const packedCoord of this._enemyThreatCoords) {
+
+                const coord = unpackCoord(packedCoord)
+
+                this.visual.circle(coord.x, coord.y, { fill: customColors.red })
+            }
+ */
+            return this._enemyThreatCoords
+        },
+    },
+    enemyThreatGoals: {
+        get() {
+            if (this._enemyThreatGoals) return this._enemyThreatGoals
+
+            this._enemyThreatGoals = []
+
+            for (const enemyCreep of this.enemyAttackers) {
+                if (enemyCreep.parts.ranged_attack) {
+                    this._enemyThreatGoals.push({
+                        pos: enemyCreep.pos,
+                        range: 4,
+                    })
+                    continue
+                }
+
+                if (!enemyCreep.parts.attack) continue
+
+                this._enemyThreatGoals.push({
+                    pos: enemyCreep.pos,
+                    range: 2,
+                })
+            }
+
+            return this._enemyThreatGoals
+        },
+    },
+    flags: {
+        get() {
+            if (this._flags) return this._flags
+
+            this._flags = {}
+
+            for (const flag of this.find(FIND_FLAGS)) {
+                this._flags[flag.name as FlagNames] = flag
+            }
+
+            return this._flags
+        },
+    },
+    defensiveRamparts: {
+        get() {
+            if (this._defensiveRamparts) return this._defensiveRamparts
+
+            this._defensiveRamparts = []
+
+            if (!this.anchor) return this._defensiveRamparts
+
+            const ramparts = this.structures.rampart
+            if (!ramparts.length) return this._defensiveRamparts
+
+            // Construct a cost matrix for the flood
+
+            const coordMap = new Uint8Array(internationalManager.getTerrainCoords(this.name))
+
+            for (const road of this.structures.road) {
+                coordMap[packAsNum(road.pos)] = 0
+            }
+
+            const rampartsByCoord: Map<number, Id<StructureRampart>> = new Map()
+
+            for (const rampart of ramparts) {
+                const packedCoord = packAsNum(rampart.pos)
+                coordMap[packedCoord] = 254
+                rampartsByCoord.set(packedCoord, rampart.id)
+            }
+
+            const visitedCoords = new Uint8Array(2500)
+
+            // Construct values for the flood
+
+            let depth = 0
+            let thisGeneration: Coord[] = [this.anchor]
+            let nextGeneration: Coord[] = []
+
+            // Loop through positions of seeds
+
+            for (const coord of thisGeneration) visitedCoords[packAsNum(coord)] = 1
+
+            // So long as there are positions in this gen
+
+            while (thisGeneration.length) {
+                // Reset next gen
+
+                nextGeneration = []
+
+                // Iterate through positions of this gen
+
+                for (const coord1 of thisGeneration) {
+                    let isRampart: boolean
+
+                    // For anything after the first generation
+
+                    if (depth > 0) {
+                        const packedCoord1 = packAsNum(coord1)
+
+                        // Iterate if the terrain is a wall
+
+                        if (coordMap[packedCoord1] === 255) continue
+
+                        if (coordMap[packedCoord1] === 254) {
+                            this._defensiveRamparts.push(findObjectWithID(rampartsByCoord.get(packedCoord1)))
+                            isRampart = true
+                        }
+                    }
+
+                    const generationAdditions = []
+                    let foundRampart: boolean
+
+                    // Loop through adjacent positions
+
+                    for (const coord2 of findCoordsInsideRect(coord1.x - 1, coord1.y - 1, coord1.x + 1, coord1.y + 1)) {
+                        const packedCoord2 = packAsNum(coord2)
+
+                        // Iterate if the adjacent pos has been visited or isn't a tile
+
+                        if (visitedCoords[packedCoord2] === 1) continue
+
+                        if (isRampart) {
+                            if (coordMap[packedCoord2] !== 254) continue
+                            foundRampart = true
+                        }
+
+                        // Otherwise record that it has been visited
+
+                        visitedCoords[packedCoord2] = 1
+
+                        // Add it to the next gen
+
+                        generationAdditions.push(coord2)
+                    }
+
+                    if (isRampart && !foundRampart) continue
+
+                    nextGeneration = nextGeneration.concat(generationAdditions)
+                }
+
+                // Set this gen to next gen
+
+                thisGeneration = nextGeneration
+
+                // Increment depth
+
+                depth += 1
+            }
+
+            return this._defensiveRamparts
+        },
+    },
+    factory: {
+        get() {
+            if (this._factory !== undefined) return this._factory
+
+            return (this._factory = this.structures.factory[0])
+        },
+    },
+    powerSpawn: {
+        get() {
+            if (this._powerSpawn !== undefined) return this._powerSpawn
+
+            return (this._powerSpawn = this.structures.powerSpawn[0])
+        },
+    },
+    nuker: {
+        get() {
+            if (this._nuker !== undefined) return this._nuker
+
+            return (this._nuker = this.structures.nuker[0])
+        },
+    },
+    observer: {
+        get() {
+            if (this._observer !== undefined) return this._observer
+
+            return (this._observer = this.structures.observer[0])
+        },
+    },
+    resourcesInStoringStructures: {
+        get() {
+            if (this._resourcesInStoringStructures) return this._resourcesInStoringStructures
+
+            this._resourcesInStoringStructures = {}
+
+            const storingStructures: AnyStoreStructure[] = [this.storage, this.factory]
+            if (this.terminal && !this.terminal.effectsData.get(PWR_DISRUPT_TERMINAL))
+                storingStructures.push(this.terminal)
+
+            for (const structure of storingStructures) {
+                if (!structure) continue
+
+                for (const key in structure.store) {
+                    const resourceType = key as ResourceConstant
+
+                    if (!this._resourcesInStoringStructures[resourceType]) {
+                        this._resourcesInStoringStructures[resourceType] = structure.store[resourceType]
+                        continue
+                    }
+
+                    this._resourcesInStoringStructures[resourceType] += structure.store[resourceType]
+                }
+            }
+
+            return this._resourcesInStoringStructures
+        },
+    },
+    unprotectedEnemyCreeps: {
+        get() {
+            if (this._unprotectedEnemyCreeps) return this._unprotectedEnemyCreeps
+
+            const avoidStructureTypes = new Set([STRUCTURE_RAMPART])
+
+            return (this._unprotectedEnemyCreeps = this.enemyCreeps.filter(enemyCreep => {
+                return !this.coordHasStructureTypes(enemyCreep.pos, avoidStructureTypes)
+            }))
+        },
+    },
+    exitCoords: {
+        get() {
+            if (this._exitCoords) return this._exitCoords
+
+            this._exitCoords = new Set()
+
+            for (const exit of this.find(FIND_EXIT)) {
+                this._exitCoords.add(packCoord(exit))
+            }
+
+            return this._exitCoords
+        },
+    },
     MEWT: {
         get() {
             if (this._MEWT) return this._MEWT
 
             this._MEWT = [
                 ...this.droppedEnergy,
-                ...this.find(FIND_TOMBSTONES),
+                ...this.find(FIND_TOMBSTONES, {
+                    filter: tombstone => tombstone.store.getUsedCapacity(RESOURCE_ENERGY) > 0,
+                }),
                 //Priortize ruins that have short-ish life remaining over source containers
                 //  So that we get all the resources out of the ruins
-                ...this.find(FIND_RUINS).filter(ru => ru.ticksToDecay < 10000),
+                ...this.find(FIND_RUINS).filter(
+                    ru => ru.ticksToDecay < 10000 && ru.store.getUsedCapacity(RESOURCE_ENERGY) > 0,
+                ),
                 ...this.sourceContainers,
                 //But we still want to pull from ruins if the source containers are empty.
-                ...this.find(FIND_RUINS).filter(ru => ru.ticksToDecay >= 10000),
+                ...this.find(FIND_RUINS).filter(
+                    ru => ru.ticksToDecay >= 10000 && ru.store.getUsedCapacity(RESOURCE_ENERGY) > 0,
+                ),
                 ...(this.find(FIND_HOSTILE_STRUCTURES).filter(structure => {
                     return (
                         (structure as any).store &&
+                        (structure as any).store.getUsedCapacity(RESOURCE_ENERGY) > 0 &&
                         //And there's not a rampart on top of it...
                         !structure.pos
                             .lookFor(LOOK_STRUCTURES)
@@ -974,7 +2089,7 @@ Object.defineProperties(Room.prototype, {
 
             this._OEWT = []
 
-            if (this.storage) {
+            if (this.storage && this.controller.level >= 4) {
                 if (this.controller.my) this._OEWT.push(this.storage)
                 // If it's not my controller but there are no enemy ramparts on the structure
                 else if (
@@ -988,7 +2103,7 @@ Object.defineProperties(Room.prototype, {
                     this._OEWT.push(this.storage)
             }
 
-            if (this.terminal) {
+            if (this.terminal && this.controller.level >= 6) {
                 if (this.controller.my) this._OEWT.push(this.terminal)
                 // If it's not my controller but there are no enemy ramparts on the structure
                 else if (
@@ -1009,8 +2124,26 @@ Object.defineProperties(Room.prototype, {
         get() {
             if (this._MAWT) return this._MAWT
 
-            this._MAWT = this.MEWT
-
+            this._MAWT = [
+                ...this.droppedResources,
+                ...this.find(FIND_TOMBSTONES).filter(cr => cr.store.getUsedCapacity() > 0),
+                ...this.find(FIND_RUINS).filter(ru => ru.ticksToDecay < 10000 && ru.store.getUsedCapacity() > 0),
+                ...this.sourceContainers.filter(cr => cr.store.getUsedCapacity() > 0),
+                ...(this.find(FIND_HOSTILE_STRUCTURES).filter(structure => {
+                    return (
+                        (structure as any).store &&
+                        (structure as any).store.getUsedCapacity(RESOURCE_ENERGY) > 0 &&
+                        //And there's not a rampart on top of it...
+                        !structure.pos
+                            .lookFor(LOOK_STRUCTURES)
+                            .filter(
+                                structure2 =>
+                                    structure2.structureType === STRUCTURE_RAMPART &&
+                                    !(structure2 as StructureRampart).my,
+                            )
+                    )
+                }) as AnyStoreStructure[]),
+            ]
             return this._MAWT
         },
     },
@@ -1058,8 +2191,8 @@ Object.defineProperties(Room.prototype, {
 
             this._OETT = []
 
-            if (this.storage) this._OETT.push(this.storage)
-            if (this.terminal) this._OETT.push(this.terminal)
+            if (this.storage && this.controller.level >= 4) this._OETT.push(this.storage)
+            if (this.terminal && this.controller.level >= 6) this._OETT.push(this.terminal)
 
             return this._OETT
         },
@@ -1105,4 +2238,12 @@ Object.defineProperties(Room.prototype, {
             return this._MOFTT
         },
     },
+    advancedLogistics: {
+        get() {
+
+            if (this._advancedLogistics !== undefined) return this._advancedLogistics
+
+            return (this._advancedLogistics = this.storage !== undefined || this.terminal !== undefined)
+        }
+    }
 } as PropertyDescriptorMap & ThisType<Room>)

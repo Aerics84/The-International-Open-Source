@@ -1,15 +1,16 @@
-import { RemoteNeeds } from 'international/constants'
-import { findClosestObject, getRange, pack, randomIntRange } from 'international/generalFunctions'
+import { RemoteData } from 'international/constants'
+import { findClosestObject, getRange, randomIntRange } from 'international/utils'
+import { packCoord } from 'other/packrat'
 
 export class RemoteDefender extends Creep {
     public get dying() {
         // Inform as dying if creep is already recorded as dying
 
-        if (this._dying) return true
+        if (this._dying !== undefined) return this._dying
 
         // Stop if creep is spawning
 
-        if (!this.ticksToLive) return false
+        if (this.spawning) return false
 
         // If the creep's remaining ticks are more than the estimated spawn time, inform false
 
@@ -21,13 +22,17 @@ export class RemoteDefender extends Creep {
     }
 
     preTickManager(): void {
-        if (!this.memory.RN) return
+        if (!this.findRemote()) return
 
         const role = this.role as 'remoteDefender'
 
-        // If the creep's remote no longer is managed by its commune
+        if (Memory.rooms[this.memory.RN].T !== 'remote') {
+            delete this.memory.RN
+            if (!this.findRemote()) return
+        }
 
-        if (!Memory.rooms[this.commune.name].remotes.includes(this.memory.RN)) {
+        // If the creep's remote no longer is managed by its commune
+        else if (Memory.rooms[this.memory.RN].CN !== this.commune.name) {
             // Delete it from memory and try to find a new one
 
             delete this.memory.RN
@@ -38,15 +43,14 @@ export class RemoteDefender extends Creep {
 
         // Reduce remote need
 
-        Memory.rooms[this.memory.RN].needs[RemoteNeeds.minDamage] -= this.attackStrength
-        Memory.rooms[this.memory.RN].needs[RemoteNeeds.minHeal] -= this.healStrength
+        Memory.rooms[this.memory.RN].data[RemoteData.minDamage] -= this.combatStrength.ranged
+        Memory.rooms[this.memory.RN].data[RemoteData.minHeal] -= this.combatStrength.heal
 
         const commune = this.commune
 
-        // Add the creep to creepsFromRoomWithRemote relative to its remote
+        // Add the creep to creepsOfRemote relative to its remote
 
-        if (commune.creepsFromRoomWithRemote[this.memory.RN])
-            commune.creepsFromRoomWithRemote[this.memory.RN][role].push(this.name)
+        if (commune.creepsOfRemote[this.memory.RN]) commune.creepsOfRemote[this.memory.RN][role].push(this.name)
     }
 
     /**
@@ -61,7 +65,7 @@ export class RemoteDefender extends Creep {
 
         // Get remotes by their efficacy
 
-        const remoteNamesByEfficacy = creep.commune?.remoteNamesBySourceEfficacy
+        const remoteNamesByEfficacy = creep.commune.remoteNamesBySourceEfficacy
 
         let roomMemory
 
@@ -74,13 +78,13 @@ export class RemoteDefender extends Creep {
 
             // If the needs of this remote are met, iterate
 
-            if (roomMemory.needs[RemoteNeeds.minDamage] + roomMemory.needs[RemoteNeeds.minHeal] <= 0) continue
+            if (roomMemory.data[RemoteData.minDamage] + roomMemory.data[RemoteData.minHeal] <= 0) continue
 
             // Otherwise assign the remote to the creep and inform true
 
             creep.memory.RN = roomName
-            roomMemory.needs[RemoteNeeds.minDamage] -= creep.attackStrength
-            roomMemory.needs[RemoteNeeds.minHeal] -= creep.healStrength
+            roomMemory.data[RemoteData.minDamage] -= creep.combatStrength.ranged
+            roomMemory.data[RemoteData.minHeal] -= creep.combatStrength.heal
 
             return true
         }
@@ -134,7 +138,6 @@ export class RemoteDefender extends Creep {
             }
 
             this.rangedMassAttack()
-            this.moveRequest = pack(enemyCreep.pos)
 
             return true
         }
@@ -174,7 +177,6 @@ export class RemoteDefender extends Creep {
 
         if (range === 1) {
             this.rangedMassAttack()
-            this.moveRequest = pack(enemyAttacker.pos)
         }
 
         // Otherwise, rangedAttack the enemyAttacker
@@ -182,7 +184,7 @@ export class RemoteDefender extends Creep {
 
         // If the creep is out matched, try to always stay in range 3
 
-        if (this.healStrength < enemyAttacker.attackStrength) {
+        if (this.combatStrength.heal < enemyAttacker.combatStrength.ranged) {
             if (range === 3) return true
 
             if (range >= 3) {
@@ -205,7 +207,7 @@ export class RemoteDefender extends Creep {
 
         // If the creep has less heal power than the enemyAttacker's attack power
 
-        if (this.healStrength < enemyAttacker.attackStrength) {
+        if (this.combatStrength.heal < enemyAttacker.combatStrength.ranged) {
             // If the range is less or equal to 2
 
             if (range <= 2) {
@@ -265,8 +267,8 @@ export class RemoteDefender extends Creep {
                     origin: creep.pos,
                     goals: [
                         {
-                            pos: new RoomPosition(25, 25, creep.commune.name),
-                            range: 25,
+                            pos: creep.commune.anchor,
+                            range: 5,
                         },
                     ],
                     typeWeights: {
@@ -326,6 +328,7 @@ export class RemoteDefender extends Creep {
                     enemyRemote: Infinity,
                     allyRemote: Infinity,
                 },
+                avoidAbandonedRemotes: true,
             })
         }
     }

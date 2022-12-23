@@ -1,7 +1,8 @@
 import { unpackPosList } from 'other/packrat'
-import { minHarvestWorkRatio, myColors, remoteHarvesterRoles, RemoteNeeds } from './constants'
-import { customLog, unpackAsRoomPos } from './generalFunctions'
-import { InternationalManager } from './internationalManager'
+import { minHarvestWorkRatio, customColors, remoteHarvesterRoles, RemoteData, ClaimRequestData } from './constants'
+import { customLog } from './utils'
+import { InternationalManager } from './international'
+import { globalStatsUpdater } from './statsManager'
 
 InternationalManager.prototype.mapVisualsManager = function () {
     // Stop if mapVisuals are disabled
@@ -10,7 +11,7 @@ InternationalManager.prototype.mapVisualsManager = function () {
 
     // If CPU logging is enabled, get the CPU used at the start
 
-    if (Memory.CPULogging) var managerCPUStart = Game.cpu.getUsed()
+    if (Memory.CPULogging === true) var managerCPUStart = Game.cpu.getUsed()
 
     // Loop through each roomName in Memory
 
@@ -28,21 +29,17 @@ InternationalManager.prototype.mapVisualsManager = function () {
             const room = Game.rooms[roomName]
             if (!room) continue
 
-            Game.map.visual.text(
-                `⚡${room.findStoredResourceAmount(RESOURCE_ENERGY)}`,
-                new RoomPosition(2, 8, roomName),
-                {
-                    align: 'left',
-                    fontSize: 8,
-                },
-            )
+            Game.map.visual.text(`⚡${room.resourcesInStoringStructures.energy}`, new RoomPosition(2, 8, roomName), {
+                align: 'left',
+                fontSize: 8,
+            })
 
             if (roomMemory.claimRequest) {
                 Game.map.visual.line(
                     room.anchor || new RoomPosition(25, 25, roomName),
                     new RoomPosition(25, 25, roomMemory.claimRequest),
                     {
-                        color: myColors.lightBlue,
+                        color: customColors.lightBlue,
                         width: 1.2,
                         opacity: 0.3,
                     },
@@ -54,20 +51,20 @@ InternationalManager.prototype.mapVisualsManager = function () {
                     room.anchor || new RoomPosition(25, 25, roomName),
                     new RoomPosition(25, 25, roomMemory.allyCreepRequest),
                     {
-                        color: myColors.green,
+                        color: customColors.green,
                         width: 1.2,
                         opacity: 0.3,
                     },
                 )
             }
 
-            if (roomMemory.attackRequests.length) {
-                for (const requestName of roomMemory.attackRequests) {
+            if (roomMemory.combatRequests.length) {
+                for (const requestName of roomMemory.combatRequests) {
                     Game.map.visual.line(
                         room.anchor || new RoomPosition(25, 25, roomName),
                         new RoomPosition(25, 25, requestName),
                         {
-                            color: myColors.red,
+                            color: customColors.red,
                             width: 1.2,
                             opacity: 0.3,
                         },
@@ -79,10 +76,9 @@ InternationalManager.prototype.mapVisualsManager = function () {
         }
 
         if (roomMemory.T === 'remote') {
-            const commune = Game.rooms[roomMemory.commune]
+            const commune = Game.rooms[roomMemory.CN]
 
             if (commune) {
-
                 const possibleReservation = commune.energyCapacityAvailable >= 650
 
                 for (const sourceIndex in roomMemory.SP) {
@@ -91,19 +87,19 @@ InternationalManager.prototype.mapVisualsManager = function () {
                     // Draw a line from the center of the remote to the best harvest pos
 
                     Game.map.visual.line(positions[0], commune.anchor || new RoomPosition(25, 25, commune.name), {
-                        color: myColors.yellow,
+                        color: customColors.yellow,
                         width: 1.2,
                         opacity: 0.3,
                     })
 
                     // Get the income based on the reservation of the room and remoteHarvester need
-                    
+
                     const income =
                         (possibleReservation ? 10 : 5) -
-                        Math.floor(roomMemory.needs[RemoteNeeds[remoteHarvesterRoles[sourceIndex]]] * minHarvestWorkRatio)
+                        Math.floor(roomMemory.data[RemoteData[remoteHarvesterRoles[sourceIndex]]] * minHarvestWorkRatio)
 
                     Game.map.visual.text(
-                        `⛏️${income},🚶‍♀️${roomMemory.SE[sourceIndex]}`,
+                        `⛏️${income},🚶‍♀️${roomMemory.SPs[sourceIndex].length}`,
                         new RoomPosition(positions[0].x, positions[0].y, roomName),
                         {
                             align: 'center',
@@ -113,19 +109,23 @@ InternationalManager.prototype.mapVisualsManager = function () {
                 }
             }
 
-            if (roomMemory.abandoned) {
-                Game.map.visual.text(`❌${roomMemory.abandoned.toString()}`, new RoomPosition(2, 16, roomName), {
-                    align: 'left',
-                    fontSize: 8,
-                })
+            if (roomMemory.data[RemoteData.abandon]) {
+                Game.map.visual.text(
+                    `❌${roomMemory.data[RemoteData.abandon].toString()}`,
+                    new RoomPosition(2, 16, roomName),
+                    {
+                        align: 'left',
+                        fontSize: 8,
+                    },
+                )
             }
 
             continue
         }
 
-        if (roomMemory.notClaimable) {
+        if (roomMemory.NC) {
             Game.map.visual.circle(new RoomPosition(25, 25, roomName), {
-                stroke: myColors.red,
+                stroke: customColors.red,
                 strokeWidth: 2,
                 fill: 'transparent',
             })
@@ -135,22 +135,35 @@ InternationalManager.prototype.mapVisualsManager = function () {
 
     for (const roomName in Memory.claimRequests) {
         Game.map.visual.text(
-            `💵${Memory.claimRequests[roomName].score.toFixed(2)}`,
+            `💵${(Memory.claimRequests[roomName].data[ClaimRequestData.score] || 0).toFixed(2)}`,
             new RoomPosition(2, 24, roomName),
             {
                 align: 'left',
                 fontSize: 8,
             },
         )
+
+        if (Memory.claimRequests[roomName].data[ClaimRequestData.abandon]) {
+            Game.map.visual.text(
+                `❌${Memory.claimRequests[roomName].data[ClaimRequestData.abandon].toString()}`,
+                new RoomPosition(2, 16, roomName),
+                {
+                    align: 'left',
+                    fontSize: 8,
+                },
+            )
+        }
     }
 
     // If CPU logging is enabled, log the CPU used by this manager
 
-    if (Memory.CPULogging)
-        customLog(
-            'Map Visuals Manager',
-            (Game.cpu.getUsed() - managerCPUStart).toFixed(2),
-            undefined,
-            myColors.lightGrey,
-        )
+    if (Memory.CPULogging === true) {
+        const cpuUsed = Game.cpu.getUsed() - managerCPUStart
+        customLog('Map Visuals Manager', cpuUsed.toFixed(2), {
+            textColor: customColors.white,
+            bgColor: customColors.lightBlue,
+        })
+        const statName: InternationalStatNames = 'mvmcu'
+        globalStatsUpdater('', statName, cpuUsed, true)
+    }
 }

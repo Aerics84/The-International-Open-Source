@@ -1,4 +1,7 @@
-import { getRange, unpackAsPos } from 'international/generalFunctions'
+import { globalStatsUpdater } from 'international/statsManager'
+import { getRange, getRangeOfCoords } from 'international/utils'
+import { packCoord, packPos, reverseCoordList, unpackPos } from 'other/packrat'
+import { Hauler } from './hauler'
 
 export class SourceHarvester extends Creep {
     constructor(creepID: Id<Creep>) {
@@ -8,11 +11,11 @@ export class SourceHarvester extends Creep {
     public get dying() {
         // Inform as dying if creep is already recorded as dying
 
-        if (this._dying) return true
+        if (this._dying !== undefined) return this._dying
 
         // Stop if creep is spawning
 
-        if (!this.ticksToLive) return false
+        if (this.spawning) return false
 
         // If the creep's remaining ticks are more than the estimated spawn time plus travel time, inform false
 
@@ -31,17 +34,16 @@ export class SourceHarvester extends Creep {
     }
 
     travelToSource?(): boolean {
-        const { room } = this
-
         this.say('🚬')
 
         // Unpack the harvestPos
 
-        const harvestPos = unpackAsPos(this.memory.packedPos)
+        const harvestPos = this.findSourcePos(this.memory.SI)
+        if (!harvestPos) return true
 
         // If the creep is at the creep's packedHarvestPos, inform false
 
-        if (getRange(this.pos.x, harvestPos.x, this.pos.y, harvestPos.y) === 0) return false
+        if (getRangeOfCoords(this.pos, harvestPos) === 0) return false
 
         // If the creep's movement type is pull
 
@@ -51,11 +53,31 @@ export class SourceHarvester extends Creep {
 
         this.say(`⏩${this.memory.SI}`)
 
+        if (this.memory.PC === packCoord(this.room.sourcePositions[this.memory.SI][0])) {
+
+            this.createMoveRequestByPath({
+                origin: this.pos,
+                goals: [
+                    {
+                        pos: harvestPos,
+                        range: 0,
+                    },
+                ],
+                avoidEnemyRanges: true,
+            },
+            {
+                packedPath: reverseCoordList(this.room.memory.SPs[this.memory.SI]),
+                loose: true,
+            })
+
+            return true
+        }
+
         this.createMoveRequest({
             origin: this.pos,
             goals: [
                 {
-                    pos: new RoomPosition(harvestPos.x, harvestPos.y, room.name),
+                    pos: harvestPos,
                     range: 0,
                 },
             ],
@@ -172,14 +194,11 @@ export class SourceHarvester extends Creep {
             const energySpentOnRepairs = Math.min(
                 workPartCount,
                 (sourceContainer.hitsMax - sourceContainer.hits) / REPAIR_POWER,
+                this.store.energy,
             )
 
             // Add repair points to total repairPoints counter and say the success
-
-            if (global.roomStats.commune[this.room.name])
-                (global.roomStats.commune[this.room.name] as RoomCommuneStats).eoro += energySpentOnRepairs
-            else if (global.roomStats.remote[this.room.name])
-                global.roomStats.remote[this.room.name].reoro += energySpentOnRepairs
+            globalStatsUpdater(this.room.name, 'eoro', energySpentOnRepairs)
             this.say(`🔧${energySpentOnRepairs * REPAIR_POWER}`)
 
             // Inform success
@@ -189,6 +208,22 @@ export class SourceHarvester extends Creep {
 
         // Inform failure
 
+        return false
+    }
+
+    transferToNearbyCreep?(): boolean {
+        //See if there's a hauler to tranfer to if we're full so we're not drop mining.
+        //   This shouldn't run if we're container mining however.
+        if (this.store.getFreeCapacity() <= this.getActiveBodyparts(WORK)) {
+            let haulers = this.room.myCreeps.hauler.map(name => Game.creeps[name] as Hauler)
+            if (haulers && haulers.length > 0) {
+                let nearby = haulers.find(haul => haul.pos.isNearTo(this.pos))
+                if (nearby) {
+                    this.transfer(nearby, RESOURCE_ENERGY)
+                    return true
+                }
+            }
+        }
         return false
     }
 
@@ -203,10 +238,6 @@ export class SourceHarvester extends Creep {
             // Define the creep's designated source
 
             const sourceIndex = creep.memory.SI
-
-            // Try to find a harvestPosition, inform false if it failed
-
-            if (!creep.findSourcePos(sourceIndex)) continue
 
             // Try to move to source. If creep moved then iterate
 
@@ -227,6 +258,8 @@ export class SourceHarvester extends Creep {
             // Try to repair the sourceContainer
 
             creep.repairSourceContainer(room.sourceContainers[sourceIndex])
+
+            if (creep.transferToNearbyCreep()) continue
         }
     }
 }

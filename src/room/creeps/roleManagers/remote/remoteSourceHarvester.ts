@@ -1,0 +1,345 @@
+import { minHarvestWorkRatio, RemoteData } from 'international/constants'
+import {
+    customLog,
+    findCarryPartsRequired,
+    findObjectWithID,
+    getRange,
+    getRangeOfCoords,
+    randomTick,
+} from 'international/utils'
+import { reverseCoordList, unpackPos, unpackPosList } from 'other/packrat'
+import { RemoteHauler } from './remoteHauler'
+
+export class RemoteHarvester extends Creep {
+    constructor(creepID: Id<Creep>) {
+        super(creepID)
+    }
+
+    public get dying(): boolean {
+        // Inform as dying if creep is already recorded as dying
+
+        if (this._dying !== undefined) return this._dying
+
+        // Stop if creep is spawning
+
+        if (this.spawning) return false
+
+        if (this.memory.RN) {
+            if (
+                this.ticksToLive >
+                this.body.length * CREEP_SPAWN_TIME + Memory.rooms[this.memory.RN].SPs[this.memory.SI].length
+            )
+                return false
+        } else if (this.ticksToLive > this.body.length * CREEP_SPAWN_TIME) return false
+
+        // Record creep as dying
+
+        return (this._dying = true)
+    }
+
+    preTickManager(): void {
+
+        if (randomTick() && !this.getActiveBodyparts(MOVE)) this.suicide()
+
+        if (!this.findRemote()) return
+        if (this.dying) return
+
+        // Reduce remote need
+
+        Memory.rooms[this.memory.RN].data[RemoteData[`remoteSourceHarvester${this.memory.SI}`]] -= this.parts.work
+
+        const commune = this.commune
+
+        // Add the creep to creepsOfRemote relative to its remote
+
+        if (commune && commune.creepsOfRemote[this.memory.RN])
+            commune.creepsOfRemote[this.memory.RN][this.role].push(this.name)
+    }
+
+    hasValidRemote?() {
+
+        if (!this.memory.RN) return false
+
+        const remoteMemory = Memory.rooms[this.memory.RN]
+
+        if (remoteMemory.T !== 'remote') return false
+        if (remoteMemory.CN !== this.commune.name) return false
+        if (remoteMemory.data[RemoteData.abandon]) return false
+
+        return true
+    }
+
+    /**
+     * Finds a remote to harvest in
+     */
+    findRemote?() {
+        if (this.hasValidRemote()) return true
+
+        for (const remoteInfo of this.commune.remoteSourceIndexesByEfficacy) {
+            const splitRemoteInfo = remoteInfo.split(' ')
+            const remoteName = splitRemoteInfo[0]
+            const remoteMemory = Memory.rooms[remoteName]
+
+            // If there is no need
+
+            if (remoteMemory.data[RemoteData[`remoteSourceHarvester${this.memory.SI}`]] <= 0) continue
+
+            this.assignRemote(remoteName)
+            return true
+        }
+
+        return false
+    }
+
+    assignRemote?(remoteName: string) {
+        this.memory.RN = remoteName
+
+        if (this.dying) return
+
+        const needs = Memory.rooms[remoteName].data
+
+        needs[RemoteData[`remoteSourceHarvester${this.memory.SI}`]] -= this.parts.work
+    }
+
+    removeRemote?() {
+        if (!this.dying) {
+            const needs = Memory.rooms[this.memory.RN].data
+
+            needs[RemoteData[`remoteSourceHarvester${this.memory.SI}`]] += this.parts.work
+        }
+
+        delete this.memory.RN
+    }
+
+    remoteActions?() {
+        // Try to move to source. If creep moved then iterate
+        if (this.travelToSource(this.memory.SI)) return
+
+        const container = this.getContainer()
+        let figuredOutWhatToDoWithTheEnergy = false
+
+        const source = this.room.sources[this.memory.SI]
+
+        //1) feed remote hauler
+        //2) build if "ahead of the curve"
+        //3) drop mine
+        //4) means you're idle, try building the container.
+
+        //If we're going to be overfilled after the next harvest, figure out what to do with the extra energy.
+        if (this.store.getFreeCapacity() <= this.getActiveBodyparts(WORK) || source.energy == 0) {
+            //See if there's a hauler to tranfer to if we're full so we're not drop mining.
+            //   This shouldn't run if we're container mining however.
+            if (!container) {
+                let haulers = this.room.myCreeps.remoteHauler?.map(name => Game.creeps[name] as RemoteHauler)
+                if (haulers && haulers.length > 0) {
+                    let nearby = haulers.find(haul => haul.pos.isNearTo(this.pos))
+                    if (nearby) {
+                        let transResult = this.transfer(nearby, RESOURCE_ENERGY)
+                        if (transResult == OK) {
+                            this.movedResource = true
+                            //We won't have energy, so don't consider maintenance.
+                            figuredOutWhatToDoWithTheEnergy = true
+                        }
+                    }
+                }
+            }
+
+            //if we're ahead of the curve...  As in we're beating the regen time of the source.
+            //  Aka  source.energy / source.energyCapacity <  source.ticksToRegeneration / 300
+            //  It's rearranged for performance.  This will also repair the container if needed.
+            if (
+                !figuredOutWhatToDoWithTheEnergy &&
+                source.energy * 300 < (source.ticksToRegeneration - 1) * source.energyCapacity
+            ) {
+                let didWork = this.doContainerMaintance()
+                //If we did container maintance, that'll eat our work action.
+                if (didWork) return
+            }
+
+            //If we get here and we still haven't figured out what to do about the energy, see
+            //  If we should drop mine, or transfer.
+            if (!figuredOutWhatToDoWithTheEnergy && container && !container.pos.isEqualTo(this.pos)) {
+                this.transfer(container, RESOURCE_ENERGY)
+            }
+        }
+
+        if (this.advancedHarvestSource(source)) return
+    }
+
+    private obtainEnergyIfNeeded() {
+        let neededEnergy = this.parts.work * BUILD_POWER
+        //We need to check to see if there's enough for the current tick, plus the next tick, otherwise
+        //  We need to pick up on this tick, which is why the *2 is there.
+        if (this.store[RESOURCE_ENERGY] < neededEnergy * 2) {
+            let droppedResource = this.pos
+                .findInRange(FIND_DROPPED_RESOURCES, 1)
+                .find(drop => drop.resourceType == RESOURCE_ENERGY)
+            if (droppedResource) this.pickup(droppedResource)
+        }
+    }
+
+    getContainerPosition(): RoomPosition {
+        return this.room.sourcePositions[this.memory.SI][0]
+    }
+
+    getContainer(): StructureContainer {
+        let containerPosition = this.getContainerPosition()
+        return this.room
+            .lookForAt(LOOK_STRUCTURES, containerPosition)
+            .find(st => st.structureType == STRUCTURE_CONTAINER) as StructureContainer
+    }
+
+    doContainerMaintance(): boolean {
+        let containerPosition = this.getContainerPosition()
+        let container = this.getContainer()
+        if (container) {
+            //If the container is below 80% health, repair it.
+            if (container.hits < container.hitsMax * 0.8) {
+                this.obtainEnergyIfNeeded()
+                this.repair(container)
+                return true
+            }
+            return false
+        }
+
+        // Don't build remote containers until we can reserve the room
+
+        if (this.commune.energyCapacityAvailable < 650) return false
+
+        // Check if there is a construction site
+
+        const cSite = this.room
+            .lookForAt(LOOK_CONSTRUCTION_SITES, containerPosition)
+            .find(st => st.structureType == STRUCTURE_CONTAINER)
+
+        if (cSite) {
+
+            // Pick energy off the ground if possible
+
+            this.obtainEnergyIfNeeded()
+
+            this.build(cSite)
+
+            // Don't allow the construction site manager to remove the site for while we're building
+
+            delete Memory.constructionSites[cSite.id]
+            return true
+        }
+
+        // Start on adding a container
+
+        this.room.createConstructionSite(containerPosition, STRUCTURE_CONTAINER)
+        return false
+    }
+
+    /**
+     *
+     */
+    travelToSource?(sourceIndex: number): boolean {
+        this.say('🚬')
+
+        // Unpack the harvestPos
+
+        const harvestPos = this.findSourcePos(this.memory.SI)
+        if (!harvestPos) return true
+
+        // If the creep is at the creep's packedHarvestPos, inform false
+
+        if (getRangeOfCoords(this.pos, harvestPos) === 0) return false
+
+        // Otherwise say the intention and create a moveRequest to the creep's harvestPos, and inform the attempt
+
+        this.say(`⏩ ${sourceIndex}`)
+
+        this.createMoveRequestByPath(
+            {
+                origin: this.pos,
+                goals: [
+                    {
+                        pos: new RoomPosition(harvestPos.x, harvestPos.y, this.memory.RN),
+                        range: 0,
+                    },
+                ],
+                avoidEnemyRanges: true,
+            },
+            {
+                packedPath: reverseCoordList(Memory.rooms[this.memory.RN].SPs[this.memory.SI]),
+                remoteName: this.memory.RN,
+                loose: true,
+            },
+        )
+
+        return true
+    }
+
+    static RemoteHarvesterManager(room: Room, creepsOfRole: string[]) {
+        for (const creepName of creepsOfRole) {
+            const creep: RemoteHarvester = Game.creeps[creepName] as RemoteHarvester
+
+            // Try to find a remote
+
+            if (!creep.findRemote()) {
+                // If the room is the creep's commune
+
+                if (room.name === creep.commune.name) {
+                    // Advanced recycle and iterate
+
+                    creep.advancedRecycle()
+                    continue
+                }
+
+                // Otherwise, have the creep make a moveRequest to its commune and iterate
+
+                creep.createMoveRequest(
+                    {
+                        origin: creep.pos,
+                        goals: [
+                            {
+                                pos: creep.commune.anchor,
+                                range: 5,
+                            },
+                        ],
+                    },
+                )
+
+                continue
+            }
+
+            // If the creep needs resources
+
+            if (room.name === creep.memory.RN) {
+                creep.remoteActions()
+                continue
+            }
+
+            creep.say(creep.memory.RN)
+
+            const sourcePos = unpackPosList(Memory.rooms[creep.memory.RN].SP[creep.memory.SI])[0]
+
+            creep.createMoveRequestByPath(
+                {
+                    origin: creep.pos,
+                    goals: [
+                        {
+                            pos: sourcePos,
+                            range: 1,
+                        },
+                    ],
+                    avoidEnemyRanges: true,
+                    typeWeights: {
+                        enemy: Infinity,
+                        ally: Infinity,
+                        keeper: Infinity,
+                        enemyRemote: Infinity,
+                        allyRemote: Infinity,
+                    },
+                    avoidAbandonedRemotes: true,
+                },
+                {
+                    packedPath: reverseCoordList(Memory.rooms[creep.memory.RN].SPs[creep.memory.SI]),
+                    remoteName: creep.memory.RN
+                },
+            )
+        }
+    }
+}

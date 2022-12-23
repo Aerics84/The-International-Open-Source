@@ -1,192 +1,58 @@
-/**
- * Increment by 1 when a change has been made that will break previous versions of the bot
- */
-export const breakingVersion = 84
-
-// Settings
-
-/**
- * Default value, do not change. Modify this property in Memory instead
- */
-export const roomVisuals = false
-
-/**
- * Default value, do not change. Modify this property in Memory instead
- */
-export const baseVisuals = false
-
-/**
- * Default value, do not change. Modify this property in Memory instead
- */
-export const mapVisuals = false
-
-/**
- * Default value, do not change. Modify this property in Memory instead
- */
-export const CPULogging = false
-
-/**
- * Default value, do not change. Modify this property in Memory instead
- */
-export const roomStats: 0 | 1 | 2 = 1
-
-/**
- * Default value, do not change. Modify this property in Memory instead
- */
-export const allyList = [
-    'MarvinTMB',
-    'Q13214',
-    'HerrKai',
-    'clarkok',
-    'PandaMaster',
-    'lokenwow',
-    'Morningtea',
-    'LittleBitBlue',
-    'Raggy',
-    'DefaultO',
-    'Allorrian',
-]
-
-/**
- * Default value, do not change. Modify this property in Memory instead
- */
-export const pixelSelling = false
-
-/**
- * Default value, do not change. Modify this property in Memory instead
- */
-export const pixelGeneration = false
-
-/**
- * Default value, do not change. Modify this property in Memory instead
- */
-export const tradeBlacklist = ['']
-
-/**
- * Default value, do not change. Modify this property in Memory instead
- */
-export const autoClaim = true
-
-/**
- * Default value, do not change. Modify this property in Memory instead
- */
-export const publicRamparts = false
-
-/**
- * Default value, do not change. Modify this property in Memory instead
- */
-export const allyTrading = true
-
 // General
-
-/**
- * Please avoid changing this. If you do change it, don't push it to the main repository
- */
-export const simpleAlliesSegment = 90
 
 export const mmoShardNames = new Set(['shard0', 'shard1', 'shard2', 'shard3'])
 
-interface RoomTypeProperties {
-    [key: string]: boolean
+export const roomTypeProperties: Set<keyof RoomMemory> = new Set([
+    'remotes',
+    'deposits',
+    'powerBanks',
+    'NC',
+    'PC',
+    'MHC',
+    'HU',
+    'AT',
+    'LAT',
+
+    'CN',
+    'RE',
+    'data',
+
+    'owner',
+    'level',
+
+    'powerEnabled',
+    'towers',
+    'hasTerminal',
+    'energy',
+    'OS',
+    'DS',
+
+    'portalsTo',
+])
+
+export const roomTypes: Record<RoomTypes, Set<keyof RoomMemory>> = {
+    commune: new Set(['remotes', 'deposits', 'powerBanks', 'PC', 'MHC', 'HU', 'AT', 'LAT']),
+    remote: new Set(['CN', 'RE', 'data', 'NC', 'PC']),
+    ally: new Set(['owner', 'level', 'NC', 'PC']),
+    allyRemote: new Set(['owner', 'NC', 'PC']),
+    enemy: new Set(['owner', 'level', 'powerEnabled', 'towers', 'hasTerminal', 'energy', 'NC', 'PC', 'OS', 'DS']),
+    enemyRemote: new Set(['owner', 'NC', 'PC']),
+    neutral: new Set(['NC', 'PC']),
+    keeper: new Set(['owner']),
+    keeperCenter: new Set(['owner']),
+    highway: new Set([]),
+    intersection: new Set(['portalsTo']),
 }
 
-export const roomTypeProperties: RoomTypeProperties = {
-    source1: true,
-    source2: true,
-    remotes: true,
-    deposits: true,
-    powerBanks: true,
-    notClaimable: true,
-    PC: true,
-    MHC: true,
-    HU: true,
+export const stagnantRoomTypes: Set<Partial<RoomTypes>> = new Set(['keeper', 'keeperCenter', 'highway', 'intersection'])
 
-    commune: true,
-    needs: true,
-    SE: true,
-    RE: true,
-    abandoned: true,
-
-    owner: true,
-    level: true,
-
-    powerEnabled: true,
-    towers: true,
-    hasTerminal: true,
-    energy: true,
-    OT: true,
-    DT: true,
-
-    portalsTo: true,
-}
-
-export const roomTypes: Record<RoomTypes, RoomType> = {
-    commune: {
-        source1: true,
-        source2: true,
-        remotes: true,
-        deposits: true,
-        powerBanks: true,
-        PC: true,
-        MHC: true,
-        HU: true,
-    },
-    remote: {
-        commune: true,
-        source1: true,
-        source2: true,
-        needs: true,
-        SE: true,
-        RE: true,
-        abandoned: true,
-        notClaimable: true,
-        PC: true,
-    },
-    ally: {
-        owner: true,
-        level: true,
-    },
-    allyRemote: {
-        owner: true,
-    },
-    enemy: {
-        owner: true,
-        level: true,
-        powerEnabled: true,
-        towers: true,
-        hasTerminal: true,
-        energy: true,
-        notClaimable: true,
-        OT: true,
-        DT: true,
-    },
-    enemyRemote: {
-        owner: true,
-        notClaimable: true,
-    },
-    neutral: {
-        notClaimable: true,
-        PC: true,
-    },
-    keeper: {
-        owner: true,
-    },
-    keeperCenter: {
-        owner: true,
-    },
-    highway: {
-        commune: true,
-    },
-    intersection: {
-        portalsTo: true,
-    },
-}
 export const roomTypesUsedForStats = ['commune', 'remote']
 
 export const creepRoles: CreepRoles[] = [
     'source1Harvester',
     'source2Harvester',
     'hauler',
+    'requestHauler',
     'controllerUpgrader',
     'builder',
     'maintainer',
@@ -194,8 +60,9 @@ export const creepRoles: CreepRoles[] = [
     'hubHauler',
     'fastFiller',
     'meleeDefender',
-    'source1RemoteHarvester',
-    'source2RemoteHarvester',
+    'rangedDefender',
+    'remoteSourceHarvester0',
+    'remoteSourceHarvester1',
     'remoteHauler',
     'remoteReserver',
     'remoteDefender',
@@ -205,21 +72,40 @@ export const creepRoles: CreepRoles[] = [
     'claimer',
     'vanguard',
     'allyVanguard',
-    'vanguardDefender',
-    'antifaAssaulter',
+    'antifaRangedAttacker',
+    'antifaAttacker',
+    'antifaHealer',
+    'antifaDismantler',
+    'antifaDowngrader',
 ]
+
+/**
+ * Roles that will interact with the room logistics system
+ */
+export const roomLogisticsRoles: Set<CreepRoles> = new Set([
+    'hauler',
+    'builder',
+    'maintainer',
+    'remoteSourceHarvester0',
+    'remoteSourceHarvester1',
+    'remoteHauler',
+    'hubHauler',
+])
+
+export const powerCreepClassNames: PowerClassConstant[] = ['operator']
 
 export enum TrafficPriorities {
     remoteHauler,
     hauler,
+    requestHauler,
     scout,
     hubHauler,
     fastFiller,
     source1Harvester,
     source2Harvester,
     mineralHarvester,
-    source1RemoteHarvester,
-    source2RemoteHarvester,
+    remoteSourceHarvester0,
+    remoteSourceHarvester1,
     remoteReserver,
     remoteDismantler,
     remoteCoreAttacker,
@@ -227,17 +113,21 @@ export enum TrafficPriorities {
     allyVanguard,
     controllerUpgrader,
     builder,
-    maintainer,
     claimer,
-    vanguardDefender,
     remoteDefender,
     meleeDefender,
-    antifaAssaulter,
+    rangedDefender,
+    maintainer,
+    antifaDismantler,
+    antifaDowngrader,
+    antifaHealer,
+    antifaAttacker,
+    antifaRangedAttacker,
 }
 
 // Set of messages to randomly apply to commune rooms
 
-export const communeSigns = ['A commune of the proletariat. Bourgeoisie not welcome here!']
+export const communeSign = 'A commune of the proletariat. Bourgeoisie not welcome here!'
 
 // Set of messages to randomly apply to non-commune rooms
 
@@ -245,13 +135,40 @@ export const nonCommuneSigns = [
     'The top 1% have more money than the poorest 4.5 billion',
     'McDonalds workers in the US make $10/hour. In Denmark, as a result of unions, they make $22/hour',
     'We have democracy in our policial system, should we not have it in our companies too?',
-    'Workers of the world, unite!',
+    'Workers of the world, unite; you have nothing to lose but your chains!',
     'Real democracy requires democracy in the workplace - Richard Wolff',
     'Adults spend a combined 13 years of their life under a dictatorship: the workplace',
     'Socialism is about worker ownership over the workplace',
-    'Trans rights.',
+    'Are trans women women? Yes. Obviously.',
     'Advancing the LGBTQ+ agenda <3',
     'Does Jeff Bezos work 56,000 times harder than his average worker? Because he gets paid like it',
+]
+
+export const chant = [
+    'Creeps',
+    'of',
+    Game.shard.name,
+    'unite',
+    'you',
+    'have',
+    'nothing',
+    'to',
+    'lose',
+    'but',
+    'your',
+    'chains!',
+    undefined,
+    'Die',
+    'Tigga',
+    'die!',
+    undefined,
+    'Read',
+    'Das',
+    'Kapital',
+    'on',
+    'marxists',
+    '.org',
+    undefined,
 ]
 
 export const roomDimensions = 50
@@ -299,6 +216,8 @@ export const impassibleStructureTypes: StructureConstant[] = [
     STRUCTURE_FACTORY,
     STRUCTURE_INVADER_CORE,
 ]
+
+export const impassibleStructureTypesSet = new Set(impassibleStructureTypes)
 
 export const structureTypesByBuildPriority: StructureConstant[] = [
     STRUCTURE_SPAWN,
@@ -359,7 +278,7 @@ export const numbersByStructureTypes = {
     16: STRUCTURE_OBSERVER,
 }
 
-export const myColors = {
+export const customColors = {
     white: '#ffffff',
     lightGrey: '#eaeaea',
     midGrey: '#bcbcbc',
@@ -399,7 +318,7 @@ export const remoteStamps: Record<RemoteStampTypes, Stamp> = {
 export const stamps: Record<StampTypes, Stamp> = {
     fastFiller: {
         offset: 3,
-        protectionOffset: 6,
+        protectionOffset: 7,
         size: 4,
         structures: {
             extension: [
@@ -487,7 +406,7 @@ export const stamps: Record<StampTypes, Stamp> = {
     },
     extensions: {
         offset: 2,
-        protectionOffset: 3,
+        protectionOffset: 4,
         size: 3,
         structures: {
             extension: [
@@ -511,15 +430,15 @@ export const stamps: Record<StampTypes, Stamp> = {
     },
     labs: {
         offset: 1,
-        protectionOffset: 3,
+        protectionOffset: 5,
         size: 2,
         asymmetry: 1,
         structures: {
             road: [
-                { x: 3, y: 3 },
+                /* { x: 3, y: 3 }, */
                 { x: 2, y: 2 },
                 { x: 1, y: 1 },
-                { x: 0, y: 0 },
+                /* { x: 0, y: 0 }, */
             ],
             /* empty: [
                 { x: 0, y: 1 },
@@ -631,10 +550,173 @@ export const minerals: Partial<ResourceConstant[]> = [
     RESOURCE_CATALYST,
 ]
 export const boosts = [RESOURCE_CATALYZED_GHODIUM_ACID]
+export const dismantleBoosts = [RESOURCE_ZYNTHIUM_HYDRIDE, RESOURCE_ZYNTHIUM_ACID, RESOURCE_CATALYZED_ZYNTHIUM_ACID]
+export const dismantleBoostsSet = new Set(dismantleBoosts)
 
-export enum RemoteNeeds {
-    source1RemoteHarvester,
-    source2RemoteHarvester,
+/**
+ * The percent of the terminal to fill with each resource
+ */
+export const terminalResourceTargets: ResourceTarget[] = [
+    {
+        resource: RESOURCE_BATTERY,
+        conditions: function (communeManager) {
+            return communeManager.room.structures.factory.length
+        },
+        min: 0.005,
+        max: 0.015,
+    },
+    {
+        resource: RESOURCE_ENERGY,
+        min: 0.08,
+        max: 0.2,
+    },
+    {
+        resource: RESOURCE_HYDROGEN,
+        min: 0.01,
+        max: 0.027,
+    },
+    {
+        resource: RESOURCE_OXYGEN,
+        min: 0.01,
+        max: 0.027,
+    },
+    {
+        resource: RESOURCE_UTRIUM,
+        min: 0.01,
+        max: 0.027,
+    },
+    {
+        resource: RESOURCE_KEANIUM,
+        min: 0.01,
+        max: 0.027,
+    },
+    {
+        resource: RESOURCE_LEMERGIUM,
+        min: 0.01,
+        max: 0.027,
+    },
+    {
+        resource: RESOURCE_ZYNTHIUM,
+        min: 0.01,
+        max: 0.027,
+    },
+    {
+        resource: RESOURCE_CATALYST,
+        min: 0.01,
+        max: 0.027,
+    },
+    {
+        resource: RESOURCE_OXIDANT,
+        min: 0,
+        max: 0.01,
+    },
+    {
+        resource: RESOURCE_REDUCTANT,
+        min: 0,
+        max: 0.01,
+    },
+    {
+        resource: RESOURCE_ZYNTHIUM_BAR,
+        min: 0,
+        max: 0.01,
+    },
+    {
+        resource: RESOURCE_LEMERGIUM_BAR,
+        min: 0,
+        max: 0.01,
+    },
+    {
+        resource: RESOURCE_UTRIUM_BAR,
+        min: 0,
+        max: 0.01,
+    },
+    {
+        resource: RESOURCE_KEANIUM_BAR,
+        min: 0,
+        max: 0.01,
+    },
+    {
+        resource: RESOURCE_PURIFIER,
+        min: 0,
+        max: 0.01,
+    },
+    {
+        resource: RESOURCE_GHODIUM_MELT,
+        min: 0,
+        max: 0.01,
+    },
+    {
+        resource: RESOURCE_POWER,
+        conditions: function (communeManager) {
+            return communeManager.room.structures.powerSpawn.length
+        },
+        min: 0.002,
+        max: 0.015,
+    },
+    {
+        resource: RESOURCE_METAL,
+        min: 0,
+        max: 0.00001,
+    },
+    {
+        resource: RESOURCE_BIOMASS,
+        min: 0,
+        max: 0.00001,
+    },
+    {
+        resource: RESOURCE_SILICON,
+        min: 0,
+        max: 0.00001,
+    },
+    {
+        resource: RESOURCE_MIST,
+        min: 0,
+        max: 0.00001,
+    },
+    {
+        resource: RESOURCE_ALLOY,
+        min: 0,
+        max: 0,
+    },
+    {
+        resource: RESOURCE_CELL,
+        min: 0,
+        max: 0,
+    },
+    {
+        resource: RESOURCE_WIRE,
+        min: 0,
+        max: 0,
+    },
+    {
+        resource: RESOURCE_CONDENSATE,
+        min: 0,
+        max: 0,
+    },
+]
+
+export enum PlayerData {
+    /**
+     * Generally how good their offense is
+     */
+    offensiveStrength,
+    /**
+     * Generally how good their defense is
+     */
+    defensiveStrength,
+    /**
+     * How much we want them dead
+     */
+    hate,
+    /**
+     * The last time we were attacked by them
+     */
+    lastAttack,
+}
+
+export enum RemoteData {
+    remoteSourceHarvester0,
+    remoteSourceHarvester1,
     remoteHauler0,
     remoteHauler1,
     remoteReserver,
@@ -645,32 +727,50 @@ export enum RemoteNeeds {
     minHeal,
     enemyReserved,
     invaderCore,
+    abandon,
+    onlyInvader,
+    disableCachedPaths,
 }
 
-export const RemoteNeeds_HaulerByIndex: RemoteNeeds[] = [RemoteNeeds.remoteHauler0, RemoteNeeds.remoteHauler1]
-
-export const RemoteNeeds_HarvesterByIndex: RemoteNeeds[] = [
-    RemoteNeeds.source1RemoteHarvester,
-    RemoteNeeds.source2RemoteHarvester,
-]
-
-export enum ClaimRequestNeeds {
+export enum ClaimRequestData {
     claimer,
     vanguard,
-    vanguardDefender,
-}
-
-export enum AttackRequestNeeds {
-    ranged,
-    attack,
-    dismantle,
-    downgrader,
     minDamage,
     minHeal,
+    abandon,
+    score,
 }
 
-export enum AllyCreepRequestNeeds {
+export enum CombatRequestData {
+    abandon,
+    rangedAttack,
+    attack,
+    dismantle,
+    downgrade,
+    minDamage,
+    minMeleeHeal,
+    minRangedHeal,
+    maxTowerDamage,
+    quads,
+    priority,
+    quadQuota,
+    inactionTimerMax,
+    inactionTimer,
+    maxThreat,
+    abandonments,
+}
+
+export enum HaulRequestData {
+    transfer,
+    distance,
+    timer,
+    priority,
+    abandon,
+}
+
+export enum AllyCreepRequestData {
     allyVanguard,
+    abandon,
 }
 
 export enum DepositNeeds {
@@ -678,44 +778,49 @@ export enum DepositNeeds {
     depositHauler,
 }
 
-export const remoteHarvesterRoles: ('source1RemoteHarvester' | 'source2RemoteHarvester')[] = [
-    'source1RemoteHarvester',
-    'source2RemoteHarvester',
+export const remoteHarvesterRoles: ('remoteSourceHarvester0' | 'remoteSourceHarvester1')[] = [
+    'remoteSourceHarvester0',
+    'remoteSourceHarvester1',
 ]
 
-export const remoteHaulerRoles: ('remoteHauler0' | 'remoteHauler1')[] = [
-    'remoteHauler0',
-    'remoteHauler1',
+export const remoteHaulerRoles: ('remoteHauler0' | 'remoteHauler1')[] = ['remoteHauler0', 'remoteHauler1']
+
+export const antifaRoles: (
+    | 'antifaRangedAttacker'
+    | 'antifaAttacker'
+    | 'antifaHealer'
+    | 'antifaDismantler'
+    | 'antifaDowngrader'
+)[] = ['antifaRangedAttacker', 'antifaAttacker', 'antifaHealer', 'antifaDismantler', 'antifaDowngrader']
+
+/**
+ * Roles for which to provide spawnGroups for based on their shared remoteName
+ */
+export const remoteRoles: (
+    | 'remoteSourceHarvester0'
+    | 'remoteSourceHarvester1'
+    | 'remoteReserver'
+    | 'remoteDefender'
+    | 'remoteCoreAttacker'
+    | 'remoteDismantler'
+)[] = [
+    'remoteSourceHarvester0',
+    'remoteSourceHarvester1',
+    'remoteReserver',
+    'remoteDefender',
+    'remoteCoreAttacker',
+    'remoteDismantler',
 ]
 
 export enum RemoteHarvesterRolesBySourceIndex {
-    source1RemoteHarvester,
-    source2RemoteHarvester,
+    remoteSourceHarvester0,
+    remoteSourceHarvester1,
 }
 
 export enum RemoteHaulerRolesBySourceIndex {
     remoteHauler0,
     remoteHauler1,
 }
-
-/**
- * Roles for which to provide spawnGroups for based on their shared remoteName
- */
-export const spawnByRoomRemoteRoles: (
-    | 'source1RemoteHarvester'
-    | 'source2RemoteHarvester'
-    | 'remoteReserver'
-    | 'remoteDefender'
-    | 'remoteCoreAttacker'
-    | 'remoteDismantler'
-)[] = [
-    'source1RemoteHarvester',
-    'source2RemoteHarvester',
-    'remoteReserver',
-    'remoteDefender',
-    'remoteCoreAttacker',
-    'remoteDismantler',
-]
 
 export const CPUBucketCapacity = 10000
 export const CPUMaxPerTick = 500
@@ -777,6 +882,8 @@ export const linkSendThreshold = 0.9
  * Links should receive when their store is less or equal to this multiplier
  */
 export const linkReceiveTreshold = 0.25
+
+export const powerSpawnRefillThreshold = 0.1
 
 /**
  * Offsets from a creep's moveRequest for which to search for relay targets
@@ -867,3 +974,203 @@ export const relayOffsets = {
         },
     ],
 }
+
+const allowedSquadCombinations: { [squadSize: string]: Partial<Record<CreepRoles, Set<CreepRoles>>> } = {
+    2: {
+        antifaRangedAttacker: new Set(['antifaRangedAttacker']),
+        antifaAttacker: new Set(['antifaHealer']),
+        antifaDismantler: new Set(['antifaHealer']),
+        antifaHealer: new Set(['antifaAttacker', 'antifaDismantler']),
+    },
+    4: {
+        antifaRangedAttacker: new Set(['antifaRangedAttacker', 'antifaAttacker', 'antifaDismantler']),
+        antifaAttacker: new Set(['antifaRangedAttacker', 'antifaAttacker', 'antifaDismantler']),
+        antifaDismantler: new Set(['antifaRangedAttacker', 'antifaAttacker', 'antifaDismantler']),
+    },
+}
+
+export { allowedSquadCombinations }
+
+export const defaultPlainCost = 1
+export const defaultRoadPlanningPlainCost = 2
+export const defaultSwampCost = 3
+export const defaultCreepSwampCost = 8
+
+export const quadAttackMemberOffsets = [
+    {
+        x: 0,
+        y: 0,
+    },
+    {
+        x: 0,
+        y: 1,
+    },
+    {
+        x: 1,
+        y: 1,
+    },
+    {
+        x: 1,
+        y: 0,
+    },
+]
+
+export const quadTransformOffsets: Record<QuadTransformTypes, { x: number; y: number }[]> = {
+    none: [
+        {
+            x: 0,
+            y: 0,
+        },
+        {
+            x: 0,
+            y: 0,
+        },
+        {
+            x: 0,
+            y: 0,
+        },
+        {
+            x: 0,
+            y: 0,
+        },
+    ],
+    rotateLeft: [
+        {
+            x: 0,
+            y: 1,
+        },
+        {
+            x: 1,
+            y: 0,
+        },
+        {
+            x: 0,
+            y: -1,
+        },
+        {
+            x: -1,
+            y: 0,
+        },
+    ],
+    rotateRight: [
+        {
+            x: 1,
+            y: 0,
+        },
+        {
+            x: 0,
+            y: -1,
+        },
+        {
+            x: -1,
+            y: 0,
+        },
+        {
+            x: 0,
+            y: 1,
+        },
+    ],
+    tradeHorizontal: [
+        {
+            x: 1,
+            y: 0,
+        },
+        {
+            x: 1,
+            y: 0,
+        },
+        {
+            x: -1,
+            y: 0,
+        },
+        {
+            x: -1,
+            y: 0,
+        },
+    ],
+    tradeVertical: [
+        {
+            x: 0,
+            y: 1,
+        },
+        {
+            x: 0,
+            y: -1,
+        },
+        {
+            x: 0,
+            y: -1,
+        },
+        {
+            x: 0,
+            y: 1,
+        },
+    ],
+}
+
+export const quadTransformIndexes: { [key in QuadTransformTypes]: number[] } = {
+    none: [0, 1, 2, 3],
+    rotateLeft: [1, 2, 3, 0],
+    rotateRight: [3, 2, 1, 0],
+    tradeHorizontal: [3, 2, 1, 0],
+    tradeVertical: [1, 0, 3, 2],
+}
+
+export const RESULT_FAIL = 0
+export const RESULT_SUCCESS = 1
+export const RESULT_ACTION = 2
+export const RESULT_NO_ACTION = 3
+
+export const maxRemoteRoomDistance = 5
+export const offsetsByDirection = [,
+    [0, -1],
+    [1, -1],
+    [1, 0],
+    [1, 1],
+    [0, 1],
+    [-1, 1],
+    [-1, 0],
+    [-1, -1],
+]
+
+export const towerPowers = [PWR_OPERATE_TOWER, PWR_DISRUPT_TOWER]
+
+export const remoteTypeWeights: Partial<{ [key in RoomTypes]: number }> = {
+    keeper: Infinity,
+    enemy: Infinity,
+    enemyRemote: Infinity,
+    ally: Infinity,
+    allyRemote: Infinity,
+}
+
+export const maxClaimRequestDistance = 10
+export const maxCombatDistance = 20
+export const maxHaulDistance = 15
+
+export const partsByPriority: PartsByPriority[] = [
+    'tough',
+    'claim',
+    'attack',
+    'ranged_attack',
+    'secondaryTough',
+    'work',
+    'carry',
+    'move',
+    'secondaryAttack',
+    'heal',
+]
+
+export const partsByPriorityPartType: { [key in PartsByPriority]: BodyPartConstant } = {
+    [TOUGH]: TOUGH,
+    [CLAIM]: CLAIM,
+    [ATTACK]: ATTACK,
+    [RANGED_ATTACK]: RANGED_ATTACK,
+    secondaryTough: TOUGH,
+    [WORK]: WORK,
+    [CARRY]: CARRY,
+    [MOVE]: MOVE,
+    secondaryAttack: ATTACK,
+    [HEAL]: HEAL,
+}
+
+export const rangedMassAttackMultiplierByRange = [1, 1, 0.4, 0.1]
