@@ -583,7 +583,7 @@ Room.prototype.spawnRequester = function () {
 
             // Otherwise if there is no storage
             else {
-                partsMultiplier += estimatedIncome / 5
+                partsMultiplier += estimatedIncome / 4
 
                 // Spawn some extra builders to handle the primarily road building RCL 3 and needy storage building
 
@@ -777,7 +777,7 @@ Room.prototype.spawnRequester = function () {
                     this.fastFillerContainerRight &&
                     this.fastFillerContainerRight.store.getUsedCapacity(RESOURCE_ENERGY) > 1000
                 )
-                    partsMultiplier += estimatedIncome * 1.25
+                    partsMultiplier += estimatedIncome * 1.5
                 else partsMultiplier += estimatedIncome * 0.75
             }
 
