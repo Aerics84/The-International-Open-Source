@@ -2340,13 +2340,10 @@ Room.prototype.createRoomLogisticsRequest = function (args) {
     // Don't make requests when there is nobody to respond
 
     if (!this.myCreepsAmount) return RESULT_NO_ACTION
+
     if (!args.resourceType) args.resourceType = RESOURCE_ENERGY
     // We can only handle energy until we have a storage or terminal
-    else if (
-        args.resourceType !== RESOURCE_ENERGY &&
-        !(this.memory.CN ? Game.rooms[this.memory.CN].advancedLogistics : this.advancedLogistics)
-    )
-        return RESULT_FAIL
+    else if (args.resourceType !== RESOURCE_ENERGY && !this.advancedLogistics) return RESULT_FAIL
 
     let amount: number
 
@@ -2382,9 +2379,6 @@ Room.prototype.createRoomLogisticsRequest = function (args) {
     if (args.priority === undefined) args.priority = 1
     else args.priority = Math.round(args.priority * 100) / 100
 
-    if (args.onlyFull && !(this.memory.CN ? Game.rooms[this.memory.CN].advancedLogistics : this.advancedLogistics))
-        delete args.onlyFull
-
     const ID = internationalManager.newTickID()
     this.visual.text(args.priority.toString(), args.target.pos)
     return (this.roomLogisticsRequests[args.type][ID] = {
@@ -2395,5 +2389,6 @@ Room.prototype.createRoomLogisticsRequest = function (args) {
         amount: amount,
         priority: args.priority,
         onlyFull: args.onlyFull,
+        noReserve: this.advancedLogistics,
     })
 }
