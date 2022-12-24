@@ -82,7 +82,11 @@ export class CombatRequestManager {
 
         // If there are no enemyCreeps, delete the combatRequest
 
-        if (!requestRoom.enemyCreeps.length && (!requestRoom.controller || !requestRoom.controller.owner)) {
+        if (
+            !requestRoom.enemyCreeps.length &&
+            !requestRoom.combatStructureTargets.length &&
+            (!requestRoom.controller || !requestRoom.controller.owner)
+        ) {
             this.communeManager.deleteCombatRequest(requestName, index)
             return
         }
