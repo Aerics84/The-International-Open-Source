@@ -184,7 +184,7 @@ Object.defineProperties(Room.prototype, {
     },
     structureUpdate: {
         get() {
-            if (this.structureUpdate !== undefined) return this.structureUpdate
+            if (this._structureUpdate !== undefined) return this._structureUpdate
 
             let newAllStructures: Structure[]
 
@@ -658,7 +658,7 @@ Object.defineProperties(Room.prototype, {
 
             this._usedSourceCoords = []
 
-            for (const source of this.sources) this._usedSourceCoords.push(new Set())
+            for (const i in this.sources) this._usedSourceCoords.push(new Set())
 
             let harvesterNames
             if (this.memory.T === 'commune') {
@@ -679,9 +679,7 @@ Object.defineProperties(Room.prototype, {
                 // If the creep is dying, iterate
 
                 if (creep.dying) continue
-
                 if (creep.memory.SI === undefined) continue
-
                 if (!creep.memory.PC) continue
 
                 // If the creep has a packedHarvestPos, record it in usedHarvestPositions
@@ -1196,7 +1194,6 @@ Object.defineProperties(Room.prototype, {
                 // If the creep is dying, iterate
 
                 if (creep.dying) continue
-
                 if (!creep.memory.PC) continue
 
                 // The creep has a packedPos
