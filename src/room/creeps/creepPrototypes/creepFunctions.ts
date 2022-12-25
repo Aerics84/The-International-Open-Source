@@ -1556,7 +1556,7 @@ Creep.prototype.findRoomLogisticsRequest = function (args) {
         }
     }
 
-    customLog('FINDING REQ', bestRequest + ', ' + Array.from(types))
+    //customLog('FINDING REQ', bestRequest + ', ' + Array.from(types))
 
     let creepRequest: CreepRoomLogisticsRequest | 0
 
@@ -1799,7 +1799,7 @@ Creep.prototype.findRoomLogisticRequestAmount = function (request) {
 Creep.prototype.runRoomLogisticsRequest = function (args) {
     const request = this.findRoomLogisticsRequest(args)
     if (!request) return RESULT_FAIL
-    customLog('REQUEST RESPONSE', request.T)
+    //customLog('REQUEST RESPONSE', request.T)
     const target = findObjectWithID(request.TID)
 
     if (getRangeOfCoords(target.pos, this.pos) > 1) {
@@ -1810,7 +1810,7 @@ Creep.prototype.runRoomLogisticsRequest = function (args) {
 
         return RESULT_ACTION
     }
-    customLog('REQUEST SUCCESS', 'See above ^')
+    //customLog('REQUEST SUCCESS', 'See above ^')
 
     // Pickup type
 
