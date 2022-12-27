@@ -385,21 +385,6 @@ Creep.prototype.advancedBuild = function () {
 }
 
 Creep.prototype.builderGetEnergy = function () {
-    // If there is a sufficient storing structure
-
-    /*const needsOwnRequest = (this.room.fastFillerContainerLeft || this.room.fastFillerContainerRight || this.room.storage || this.room.terminal) !== undefined
-    if (needsOwnRequest) {
-
-        this.room.roomManager.room.createRoomLogisticsRequest({
-            target: this,
-            type: 'transfer',
-            priority: 8,
-            threshold: this.store.getCapacity() * 0.5,
-        })
-
-        return RESULT_SUCCESS
-    }*/
-
     if (!this.needsResources()) return RESULT_NO_ACTION
 
     // We need energy, find a request
