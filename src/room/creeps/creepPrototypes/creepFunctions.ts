@@ -384,11 +384,10 @@ Creep.prototype.advancedBuild = function () {
     return RESULT_SUCCESS
 }
 
-Creep.prototype.builderGetEnergy = function() {
-
+Creep.prototype.builderGetEnergy = function () {
     // If there is a sufficient storing structure
 
-    const needsOwnRequest = (this.room.fastFillerContainerLeft || this.room.fastFillerContainerRight || this.room.storage || this.room.terminal) !== undefined
+    /*const needsOwnRequest = (this.room.fastFillerContainerLeft || this.room.fastFillerContainerRight || this.room.storage || this.room.terminal) !== undefined
     if (needsOwnRequest) {
 
         this.room.roomManager.room.createRoomLogisticsRequest({
@@ -399,7 +398,7 @@ Creep.prototype.builderGetEnergy = function() {
         })
 
         return RESULT_SUCCESS
-    }
+    }*/
 
     if (!this.needsResources()) return RESULT_NO_ACTION
 
@@ -577,7 +576,7 @@ Creep.prototype.findRepairTarget = function () {
 
     const { room } = this
 
-    let possibleRepairTargets: (Structure<BuildableStructureConstant>)[] = room.structures.road
+    let possibleRepairTargets: Structure<BuildableStructureConstant>[] = room.structures.road
     possibleRepairTargets = possibleRepairTargets.concat(room.structures.container)
 
     let lowestScore = Infinity
@@ -1469,6 +1468,8 @@ Creep.prototype.roomLogisticsRequestManager = function () {
     }
 
     const request = this.memory.RLRs[0]
+    if (!request) return
+
     const target = findObjectWithID(request.TID)
 
     // Pickup type

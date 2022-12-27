@@ -15,6 +15,7 @@ export class ContainerManager {
 
         this.runFastFillerContainers()
         this.runControllerContainer()
+        this.runControllerLink()
         this.runMineralContainer()
     }
 
@@ -67,7 +68,18 @@ export class ContainerManager {
             target: container,
             type: 'transfer',
             threshold: container.store.getCapacity() * 0.75,
-            priority: scalePriority(container.store.getCapacity(), container.reserveStore.energy, 20),
+            priority: 12.5 + scalePriority(container.store.getCapacity(), container.reserveStore.energy, 20),
+        })
+    }
+
+    private runControllerLink() {
+        const link = this.roomManager.room.controllerLink
+        if (!link || this.roomManager.room.creepsFromRoom['hubHauler'].length > 0) return
+
+        this.roomManager.room.createRoomLogisticsRequest({
+            target: link,
+            type: 'transfer',
+            priority: 12.5 + scalePriority(link.store.getCapacity(), link.reserveStore.energy, 20),
         })
     }
 

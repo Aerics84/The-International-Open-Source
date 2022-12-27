@@ -584,12 +584,12 @@ export class RemoteHauler extends Creep {
 
         const moveCoord = this.moveRequest ? unpackCoord(this.moveRequest) : unpackPosList(this.memory.P)[1]
 
-        if (this.pos.x === moveCoord.x || this.pos.y === moveCoord.y) {
+        if (moveCoord && (this.pos.x === moveCoord.x || this.pos.y === moveCoord.y)) {
             this.relayCardinal(moveCoord)
             return
         }
 
-        this.relayDiagonal(moveCoord)
+        if (moveCoord) this.relayDiagonal(moveCoord)
     }
 
     constructor(creepID: Id<Creep>) {

@@ -47,6 +47,7 @@ import { HaulerSizeManager } from './haulerSize'
 import { HaulerNeedManager } from './haulerNeed'
 import { packXYAsCoord, unpackCoord, unpackPosList } from 'other/packrat'
 import { ContainerManager } from '../container'
+import { DroppedResourceManager } from '../commune/droppedResources'
 import { StoringStructuresManager } from './storingStructures'
 
 export class CommuneManager {
@@ -202,6 +203,7 @@ export class CommuneManager {
         this.haulerNeedManager.run()
 
         this.room.roomManager.containerManager.run()
+        this.room.roomManager.droppedResourceManager.run()
         this.spawningStructuresManager.createRoomLogisticsRequests()
         this.storingStructuresManager.run()
         this.room.linkManager()
@@ -384,7 +386,7 @@ export class CommuneManager {
         const level = this.room.controller.level
 
         return Math.min(
-            Math.floor(Math.pow((level - 3) * 50, 2.5) + this.room.memory.AT * 5 * Math.pow(level, 2)),
+            Math.floor(Math.pow((level - 3) * 50, 3) + this.room.memory.AT * 5 * Math.pow(level, 2)),
             RAMPART_HITS_MAX[level],
         )
     }
@@ -392,7 +394,6 @@ export class CommuneManager {
     _storingStructures: (StructureStorage | StructureTerminal)[]
 
     get storingStructures() {
-
         if (this._storingStructures) return this._storingStructures
 
         this._storingStructures = []
