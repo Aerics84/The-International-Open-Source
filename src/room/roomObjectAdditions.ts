@@ -1,4 +1,4 @@
-import { findObjectWithID } from 'international/utils'
+import { customLog, findObjectWithID } from 'international/utils'
 
 Object.defineProperties(RoomObject.prototype, {
     effectsData: {
@@ -52,13 +52,21 @@ Object.defineProperties(RoomObject.prototype, {
                     return target[resourceType] ?? 0
                 },
                 set(target: Partial<CustomStore>, resourceType: ResourceConstant, newAmount) {
+
+                    const parent = findObjectWithID(target.parentID)
+
+                    if (parent instanceof Creep) customLog('PRE CHECK', parent.usedNextStore + ', ' + parent.store.getCapacity(), { superPosition: 1 })
+                    if (parent._usedNextStore !== undefined) {
+
+                        parent._usedNextStore += newAmount - (target[resourceType] ?? 0)
+                        if (parent instanceof Creep) customLog('USED', parent._usedNextStore + ', ' + (newAmount - (target[resourceType] ?? 0)), { superPosition: 1 })
+                    }
+                    if (parent instanceof Creep) customLog('CHECK', newAmount + ', ' + target[resourceType], { superPosition: 1 })
                     // Update the change
 
                     target[resourceType] = newAmount
-
-                    findObjectWithID(target.parentID)._usedReserveStore = newAmount - target[resourceType]
                     return true
-                },
+                }
             })
 
             return this._nextStore
@@ -66,6 +74,7 @@ Object.defineProperties(RoomObject.prototype, {
     },
     usedNextStore: {
         get(this: RoomObject & { store?: StoreDefinition }) {
+            if (this instanceof Creep) customLog('PRESENT USED', this.nextStore.energy + ', ' + this._usedNextStore, { superPosition: 1 })
             if (this._usedNextStore !== undefined) return this._usedNextStore
 
             this._usedNextStore = 0
@@ -75,7 +84,7 @@ Object.defineProperties(RoomObject.prototype, {
 
                 this._usedNextStore += this.nextStore[keys[i] as ResourceConstant]
             }
-
+            if (this instanceof Creep) customLog('NEW USED', this._usedNextStore, { superPosition: 1 })
             return this._usedNextStore
         },
     },
@@ -95,11 +104,15 @@ Object.defineProperties(RoomObject.prototype, {
                     return target[resourceType] ?? 0
                 },
                 set(target: Partial<CustomStore>, resourceType: ResourceConstant, newAmount) {
+                    const parent = findObjectWithID(target.parentID)
+                    if (parent._usedReserveStore !== undefined) {
+
+                        parent._usedReserveStore += newAmount - (target[resourceType] ?? 0)
+                    }
+
                     // Update the change
 
                     target[resourceType] = newAmount
-
-                    findObjectWithID(target.parentID)._usedReserveStore = newAmount - target[resourceType]
                     return true
                 },
             })
@@ -115,7 +128,6 @@ Object.defineProperties(RoomObject.prototype, {
             const keys = Object.keys(this.reserveStore)
 
             for (let i = 1; i < keys.length; i++) {
-
                 this._usedReserveStore += this.reserveStore[keys[i] as ResourceConstant]
             }
 

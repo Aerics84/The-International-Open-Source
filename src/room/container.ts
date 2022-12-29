@@ -8,11 +8,14 @@ export class ContainerManager {
         this.roomManager = roomManager
     }
 
-    run() {
+    runRemote() {
+
         this.runSourceContainers()
+    }
 
-        if (this.roomManager.room.memory.T === 'remote') return
+    runCommune() {
 
+        this.runSourceContainers()
         this.runFastFillerContainers()
         this.runControllerContainer()
         this.runControllerLink()
@@ -68,7 +71,7 @@ export class ContainerManager {
             target: container,
             type: 'transfer',
             threshold: container.store.getCapacity() * 0.75,
-            priority: scalePriority(container.store.getCapacity(), container.reserveStore.energy, 20),
+            priority: 50 + scalePriority(container.store.getCapacity(), container.reserveStore.energy, 20),
         })
     }
 
