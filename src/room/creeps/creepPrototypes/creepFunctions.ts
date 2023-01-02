@@ -557,7 +557,6 @@ Creep.prototype.findRepairTarget = function () {
     const { room } = this
 
     let possibleRepairTargets: Structure<BuildableStructureConstant>[] = room.structures.road
-    let possibleRepairTargets: Structure<BuildableStructureConstant>[] = room.structures.road
     possibleRepairTargets = possibleRepairTargets.concat(room.structures.container)
 
     let lowestScore = Infinity
