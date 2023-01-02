@@ -1458,11 +1458,6 @@ Creep.prototype.roomLogisticsRequestManager = function () {
 
     const request = this.memory.RLRs[0]
     if (!request) return
-<<<<<<< HEAD
-
-=======
-    
->>>>>>> 666ebf8099d636fcd78854e356dd15ee93b1495a
     const target = findObjectWithID(request.TID)
 
     // Pickup type
@@ -1690,7 +1685,6 @@ Creep.prototype.canAcceptRoomLogisticsRequest = function (requestType, requestID
         // We don't have enough resource
 
         if (this.nextStore[request.resourceType] <= 0) {
-
             // We don't have space to get any
 
             if (this.freeNextStore <= 0) return false
@@ -1841,7 +1835,9 @@ Creep.prototype.runRoomLogisticsRequest = function (args) {
         customLog('PRE END AMOUNT', this.nextStore.energy, { superPosition: 1 })
         this.nextStore[request.RT] += request.A
         target.nextAmount -= request.A
-        customLog('END AMOUNT', request.A + ', ' + this.nextStore.energy + ', ' + this.usedNextStore, { superPosition: 1 })
+        customLog('END AMOUNT', request.A + ', ' + this.nextStore.energy + ', ' + this.usedNextStore, {
+            superPosition: 1,
+        })
         this.memory.RLRs.splice(0, 1)
         return RESULT_SUCCESS
     }
