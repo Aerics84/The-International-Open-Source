@@ -47,6 +47,7 @@ import { HaulerSizeManager } from './haulerSize'
 import { HaulerNeedManager } from './haulerNeed'
 import { packXYAsCoord, unpackCoord, unpackPosList } from 'other/packrat'
 import { ContainerManager } from '../container'
+import { DroppedResourceManager } from '../commune/droppedResources'
 import { StoringStructuresManager } from './storingStructures'
 import { DroppedResourceManager } from 'room/droppedResources'
 import { LinkManager } from './links'
@@ -391,7 +392,7 @@ export class CommuneManager {
         const level = this.room.controller.level
 
         return Math.min(
-            Math.floor(Math.pow((level - 3) * 50, 2.5) + this.room.memory.AT * 5 * Math.pow(level, 2)),
+            Math.floor(Math.pow((level - 3) * 50, 2.75) + this.room.memory.AT * 5 * Math.pow(level, 2)),
             RAMPART_HITS_MAX[level],
         )
     }
