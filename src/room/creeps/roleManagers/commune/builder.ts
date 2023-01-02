@@ -13,9 +13,9 @@ export class Builder extends Creep {
             (this.room.fastFillerContainerLeft ||
                 this.room.fastFillerContainerRight ||
                 this.room.storage ||
-                this.room.terminal) !== undefined
+                this.room.terminal) === undefined
 
-        if (needsOwnRequest) {
+        if (needsOwnRequest && !this.spawning) {
             this.room.roomManager.room.createRoomLogisticsRequest({
                 target: this,
                 type: 'transfer',

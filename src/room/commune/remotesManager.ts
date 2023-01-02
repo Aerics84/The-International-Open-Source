@@ -52,7 +52,7 @@ export class RemotesManager {
 
             // Every x ticks ensure enemies haven't blocked off too much of the path
 
-            if (randomTick(100)) {
+            if (randomTick(50)) {
                 const safeDistance = advancedFindDistance(room.name, remoteName, {
                     typeWeights: remoteTypeWeights,
                     avoidAbandonedRemotes: true,

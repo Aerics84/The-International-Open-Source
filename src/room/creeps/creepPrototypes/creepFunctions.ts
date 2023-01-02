@@ -1747,7 +1747,7 @@ Creep.prototype.createBackupStoringStructuresRoomLogisticsRequest = function (ty
         resourceType = key as ResourceConstant
         break
     }
-    customLog('BACKUP', resourceType)
+    //customLog('BACKUP', resourceType)
     const storingStructure = storingStructures.find(
         structure => structure.freeReserveStore >= this.nextStore[resourceType],
     )

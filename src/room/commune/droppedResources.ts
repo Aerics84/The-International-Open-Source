@@ -20,7 +20,7 @@ export class DroppedResourceManager {
                 target: resource,
                 resourceType: resource.resourceType,
                 type: 'pickup',
-                priority: Math.max(5, 10 - resource.reserveAmount / 200),
+                priority: Math.max(0, 5 - resource.reserveAmount / 200),
             })
         }
     }
