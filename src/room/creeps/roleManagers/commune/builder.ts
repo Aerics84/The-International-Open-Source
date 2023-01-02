@@ -7,22 +7,14 @@ export class Builder extends Creep {
     }
 
     preTickManager() {
-        // If there is a sufficient storing structure
+        if (!this.room.cSiteTarget || this.spawning) return
 
-        const needsOwnRequest =
-            (this.room.fastFillerContainerLeft ||
-                this.room.fastFillerContainerRight ||
-                this.room.storage ||
-                this.room.terminal) === undefined
-
-        if (needsOwnRequest && !this.spawning) {
-            this.room.roomManager.room.createRoomLogisticsRequest({
-                target: this,
-                type: 'transfer',
-                priority: 5,
-                threshold: this.store.getCapacity() * 0.5,
-            })
-        }
+        this.room.roomManager.room.createRoomLogisticsRequest({
+            target: this,
+            type: 'transfer',
+            priority: 8,
+            threshold: this.store.getCapacity() * 0.5,
+        })
     }
 
     run?() {

@@ -16,12 +16,16 @@ export class HaulerNeedManager {
             const sourceLink = room.sourceLinks[index]
             if (sourceLink && sourceLink.RCLActionable) continue
 
-            room.haulerNeed +=
-                findCarryPartsRequired(room.sourcePaths[index].length + 6, room.estimatedSourceIncome[index]) * 1.2
+            room.haulerNeed += findCarryPartsRequired(
+                room.sourcePaths[index].length + 3,
+                room.estimatedSourceIncome[index],
+            )
         }
 
         if (!room.controllerLink || !room.controller.RCLActionable)
             room.haulerNeed += findCarryPartsRequired(room.upgradePathLength, room.upgradeStrength)
+
+        room.haulerNeed += findCarryPartsRequired(room.mineralPath.length, room.mineralHarvestStrength)
 
         room.haulerNeed += room.structures.lab.length / 1.2
 

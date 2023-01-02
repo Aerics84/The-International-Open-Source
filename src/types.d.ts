@@ -964,6 +964,7 @@ declare global {
         towerAttackTarget: Creep
 
         upgradeStrength: number
+        mineralHarvestStrength: number
 
         /**
          * The carry parts needed to effectively run the commune
@@ -1208,26 +1209,6 @@ declare global {
 
         communeConstructionPlacement(): void
 
-        // Link functions
-
-        /**
-         * Dictates and operates tasks for links
-         */
-        linkManager(): void
-
-        sourcesToReceivers(sourceLinks: (StructureLink | false)[], receiverLinks: (StructureLink | false)[]): void
-
-        hubToFastFiller(hubLink: StructureLink | undefined, fastFillerLink: StructureLink | undefined): void
-
-        hubToController(hubLink: StructureLink | undefined, controllerLink: StructureLink | undefined): void
-
-        // Room Visuals
-
-        /**
-         * Adds annotations to the room, if roomVisuals are enabled
-         */
-        roomVisualsManager(): void
-
         // Room Getters
 
         readonly global: Partial<RoomGlobal>
@@ -1364,6 +1345,10 @@ declare global {
         _usedMineralCoords: Set<string>
 
         readonly usedMineralCoords: Set<string>
+
+        _mineralPath: RoomPosition[]
+
+        readonly mineralPath: RoomPosition[]
 
         _fastFillerPositions: RoomPosition[]
 
@@ -1692,6 +1677,10 @@ declare global {
          * Source Paths
          */
         SPs: string[]
+        /**
+         * Mineral Path
+         */
+        MPa: string
 
         /**
          * Mineral Positions, packed positions around the mineral where harvesters can sit

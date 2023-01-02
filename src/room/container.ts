@@ -8,13 +8,15 @@ export class ContainerManager {
         this.roomManager = roomManager
     }
 
-    run() {
+    runRemote() {
         this.runSourceContainers()
+    }
 
-        if (this.roomManager.room.memory.T === 'remote') return
-
+    runCommune() {
+        this.runSourceContainers()
         this.runFastFillerContainers()
         this.runControllerContainer()
+        this.runControllerLink()
         this.runControllerLink()
         this.runMineralContainer()
     }

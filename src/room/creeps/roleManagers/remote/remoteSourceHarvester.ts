@@ -6,6 +6,7 @@ import {
     getRange,
     getRangeOfCoords,
     randomTick,
+    scalePriority,
 } from 'international/utils'
 import { reverseCoordList, unpackPos, unpackPosList } from 'other/packrat'
 import { RemoteHauler } from './remoteHauler'
@@ -38,7 +39,6 @@ export class RemoteHarvester extends Creep {
     }
 
     preTickManager(): void {
-
         if (randomTick() && !this.getActiveBodyparts(MOVE)) this.suicide()
 
         if (!this.findRemote()) return
@@ -57,7 +57,6 @@ export class RemoteHarvester extends Creep {
     }
 
     hasValidRemote?() {
-
         if (!this.memory.RN) return false
 
         const remoteMemory = Memory.rooms[this.memory.RN]
@@ -115,7 +114,7 @@ export class RemoteHarvester extends Creep {
         // Try to move to source. If creep moved then iterate
         if (this.travelToSource(this.memory.SI)) return
 
-        const container = this.getContainer()
+        const container = this.room.sourceContainers[this.memory.SI]
         let figuredOutWhatToDoWithTheEnergy = false
 
         const source = this.room.sources[this.memory.SI]
@@ -129,18 +128,17 @@ export class RemoteHarvester extends Creep {
         if (this.store.getFreeCapacity() <= this.getActiveBodyparts(WORK) || source.energy == 0) {
             //See if there's a hauler to tranfer to if we're full so we're not drop mining.
             //   This shouldn't run if we're container mining however.
+
             if (!container) {
-                let haulers = this.room.myCreeps.remoteHauler?.map(name => Game.creeps[name] as RemoteHauler)
-                if (haulers && haulers.length > 0) {
-                    let nearby = haulers.find(haul => haul.pos.isNearTo(this.pos))
-                    if (nearby) {
-                        let transResult = this.transfer(nearby, RESOURCE_ENERGY)
-                        if (transResult == OK) {
-                            this.movedResource = true
-                            //We won't have energy, so don't consider maintenance.
-                            figuredOutWhatToDoWithTheEnergy = true
-                        }
-                    }
+                // If the creep isn't full enough to justify a request
+
+                if (this.nextStore.energy > this.store.getCapacity() * 0.5) {
+
+                    this.room.createRoomLogisticsRequest({
+                        target: this,
+                        type: 'withdraw',
+                        priority: scalePriority(this.store.getCapacity(), this.reserveStore.energy, 5, true),
+                    })
                 }
             }
 
@@ -151,7 +149,7 @@ export class RemoteHarvester extends Creep {
                 !figuredOutWhatToDoWithTheEnergy &&
                 source.energy * 300 < (source.ticksToRegeneration - 1) * source.energyCapacity
             ) {
-                let didWork = this.doContainerMaintance()
+                let didWork = this.maintainContainer()
                 //If we did container maintance, that'll eat our work action.
                 if (didWork) return
             }
@@ -178,20 +176,10 @@ export class RemoteHarvester extends Creep {
         }
     }
 
-    getContainerPosition(): RoomPosition {
-        return this.room.sourcePositions[this.memory.SI][0]
-    }
+    maintainContainer(): boolean {
+        const container = this.room.sourceContainers[this.memory.SI]
+        const sourcePos = this.room.sourcePositions[this.memory.SI][0]
 
-    getContainer(): StructureContainer {
-        let containerPosition = this.getContainerPosition()
-        return this.room
-            .lookForAt(LOOK_STRUCTURES, containerPosition)
-            .find(st => st.structureType == STRUCTURE_CONTAINER) as StructureContainer
-    }
-
-    doContainerMaintance(): boolean {
-        let containerPosition = this.getContainerPosition()
-        let container = this.getContainer()
         if (container) {
             //If the container is below 80% health, repair it.
             if (container.hits < container.hitsMax * 0.8) {
@@ -209,11 +197,10 @@ export class RemoteHarvester extends Creep {
         // Check if there is a construction site
 
         const cSite = this.room
-            .lookForAt(LOOK_CONSTRUCTION_SITES, containerPosition)
+            .lookForAt(LOOK_CONSTRUCTION_SITES, sourcePos)
             .find(st => st.structureType == STRUCTURE_CONTAINER)
 
         if (cSite) {
-
             // Pick energy off the ground if possible
 
             this.obtainEnergyIfNeeded()
@@ -228,7 +215,7 @@ export class RemoteHarvester extends Creep {
 
         // Start on adding a container
 
-        this.room.createConstructionSite(containerPosition, STRUCTURE_CONTAINER)
+        this.room.createConstructionSite(sourcePos, STRUCTURE_CONTAINER)
         return false
     }
 
@@ -256,7 +243,7 @@ export class RemoteHarvester extends Creep {
                 origin: this.pos,
                 goals: [
                     {
-                        pos: new RoomPosition(harvestPos.x, harvestPos.y, this.memory.RN),
+                        pos: harvestPos,
                         range: 0,
                     },
                 ],
@@ -290,17 +277,15 @@ export class RemoteHarvester extends Creep {
 
                 // Otherwise, have the creep make a moveRequest to its commune and iterate
 
-                creep.createMoveRequest(
-                    {
-                        origin: creep.pos,
-                        goals: [
-                            {
-                                pos: creep.commune.anchor,
-                                range: 5,
-                            },
-                        ],
-                    },
-                )
+                creep.createMoveRequest({
+                    origin: creep.pos,
+                    goals: [
+                        {
+                            pos: creep.commune.anchor,
+                            range: 5,
+                        },
+                    ],
+                })
 
                 continue
             }

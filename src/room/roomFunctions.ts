@@ -2380,7 +2380,7 @@ Room.prototype.createRoomLogisticsRequest = function (args) {
     else args.priority = Math.round(args.priority * 100) / 100
 
     const ID = internationalManager.newTickID()
-    this.visual.text(args.priority.toString(), args.target.pos)
+    /* this.visual.text(args.priority.toString(), args.target.pos) */
     return (this.roomLogisticsRequests[args.type][ID] = {
         ID,
         type: args.type,
@@ -2389,6 +2389,6 @@ Room.prototype.createRoomLogisticsRequest = function (args) {
         amount: amount,
         priority: args.priority,
         onlyFull: args.onlyFull,
-        noReserve: this.advancedLogistics,
+        noReserve: !this.advancedLogistics, // Don't reserve if advancedLogistics is disabled
     })
 }

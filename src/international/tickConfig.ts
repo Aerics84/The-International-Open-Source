@@ -56,6 +56,7 @@ class TickConfig {
             globalStatsUpdater('', statName, cpuUsed, true)
         }
     }
+    
     private configGeneral() {
         // General
 
@@ -73,6 +74,7 @@ class TickConfig {
         global.constructionSitesCount = Object.keys(Game.constructionSites).length
         global.logs = ``
     }
+
     private configRooms() {
         // Configure rooms
 
@@ -265,12 +267,11 @@ class TickConfig {
 
                 if (room.storage && room.controller.level >= 4) {
                     if (
-                        room.resourcesInStoringStructures.energy / (20000 + room.controller.level * 1000) <
-                        room.memory.combatRequests.length
+                        room.memory.combatRequests.length + 1 >= room.communeManager.maxCombatRequests
                     )
                         continue
                 } else {
-                    if (room.estimateIncome() / 10 < room.memory.combatRequests.length) continue
+                    if (room.memory.combatRequests.length + 1 >= room.estimateIncome() / 10) continue
                 }
 
                 // Ensure we can afford the creeps required
