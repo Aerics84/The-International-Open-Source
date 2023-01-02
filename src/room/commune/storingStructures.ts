@@ -25,8 +25,6 @@ export class StoringStructuresManager {
         if (terminal && !terminal.effectsData.get(PWR_DISRUPT_TERMINAL)) storingStructures.push(terminal)
 
         for (const structure of storingStructures) {
-            const createTransfer = structure.freeReserveStore > structure.store.getCapacity() * 0.9
-
             this.communeManager.room.createRoomLogisticsRequest({
                 target: structure,
                 onlyFull: true,
@@ -34,11 +32,12 @@ export class StoringStructuresManager {
                 priority: 0,
             })
 
-            if (!createTransfer) continue
+            // We are close to full
+
+            if (structure.usedReserveStore > structure.store.getCapacity() * 0.9) continue
 
             this.communeManager.room.createRoomLogisticsRequest({
                 target: structure,
-                onlyFull: true,
                 type: 'transfer',
                 priority: 100,
             })

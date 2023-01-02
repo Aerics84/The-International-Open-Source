@@ -124,6 +124,7 @@ export class CommuneManager {
 
         room.spawnRequests = []
         room.upgradeStrength = 0
+        room.mineralHarvestStrength = 0
         room.roomLogisticsRequests = {
             transfer: {},
             withdraw: {},

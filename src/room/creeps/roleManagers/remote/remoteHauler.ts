@@ -473,7 +473,7 @@ export class RemoteHauler extends Creep {
 
     relay?() {
         // If there is no easy way to know what coord the creep is trying to go to next
-
+        
         if (!this.moveRequest && (!this.memory.P || this.memory.P.length <= 2)) return
         if (this.movedResource) return
         if (!this.nextStore.energy) return
@@ -482,12 +482,12 @@ export class RemoteHauler extends Creep {
 
         if (
             !this.fatigue &&
-            this.memory.RN &&
-            getRangeOfCoords(unpackPosList(Memory.rooms[this.memory.RN].SP[this.memory.SI])[0], this.pos) <= 1
+            this.memory.RN == this.room.name &&
+            getRangeOfCoords(this.room.sourcePositions[this.memory.SI][0], this.pos) <= 1
         )
             return
 
-        const moveCoord = this.moveRequest ? unpackCoord(this.moveRequest) : unpackPosList(this.memory.P)[1]
+        const moveCoord = this.moveRequest ? unpackCoord(this.moveRequest) : unpackPosList(this.memory.P)[2]
 
         if (moveCoord && (this.pos.x === moveCoord.x || this.pos.y === moveCoord.y)) {
             this.relayCardinal(moveCoord)
