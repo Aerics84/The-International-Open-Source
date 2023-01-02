@@ -7,7 +7,7 @@ export class Builder extends Creep {
     }
 
     preTickManager() {
-        if (!this.room.cSiteTarget) return
+        if (!this.room.cSiteTarget || this.spawning) return
 
         this.room.roomManager.room.createRoomLogisticsRequest({
             target: this,
