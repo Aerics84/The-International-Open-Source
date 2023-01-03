@@ -16,8 +16,10 @@ export class HaulerNeedManager {
             const sourceLink = room.sourceLinks[index]
             if (sourceLink && sourceLink.RCLActionable) continue
 
-            room.haulerNeed +=
-                findCarryPartsRequired(room.sourcePaths[index].length + 3, room.estimatedSourceIncome[index])
+            room.haulerNeed += findCarryPartsRequired(
+                room.sourcePaths[index].length + 3,
+                room.estimatedSourceIncome[index],
+            )
         }
 
         if (!room.controllerLink || !room.controller.RCLActionable)

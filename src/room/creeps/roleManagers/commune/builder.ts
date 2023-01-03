@@ -2,14 +2,12 @@ import { RESULT_FAIL, RESULT_SUCCESS } from 'international/constants'
 import { customLog, findObjectWithID, getRange } from 'international/utils'
 
 export class Builder extends Creep {
-
     constructor(creepID: Id<Creep>) {
         super(creepID)
     }
 
     preTickManager() {
-
-        if (!this.room.cSiteTarget) return
+        if (!this.room.cSiteTarget || this.spawning) return
 
         this.room.roomManager.room.createRoomLogisticsRequest({
             target: this,
@@ -26,7 +24,6 @@ export class Builder extends Creep {
     }
 
     static builderManager(room: Room, creepsOfRole: string[]) {
-
         for (const creepName of creepsOfRole) {
             const creep: Builder = Game.creeps[creepName]
             creep.run()

@@ -367,7 +367,7 @@ export class RemoteHauler extends Creep {
                 },
             },
             {
-                packedPath: Memory.rooms[this.memory.RN].SPs[this.memory.SI],
+                packedPath: Memory.rooms[this.commune.name].SPs[this.memory.SI],
             },
         )
 
@@ -420,7 +420,7 @@ export class RemoteHauler extends Creep {
         delete this.memory.P
         delete creepAtPos.memory.P
 
-        this.getResources()
+        //this.getResources()
 
         const remoteHauler = creepAtPos as RemoteHauler
         remoteHauler.deliverResources()
@@ -489,12 +489,12 @@ export class RemoteHauler extends Creep {
 
         const moveCoord = this.moveRequest ? unpackCoord(this.moveRequest) : unpackPosList(this.memory.P)[2]
 
-        if (this.pos.x === moveCoord.x || this.pos.y === moveCoord.y) {
+        if (moveCoord && (this.pos.x === moveCoord.x || this.pos.y === moveCoord.y)) {
             this.relayCardinal(moveCoord)
             return
         }
 
-        this.relayDiagonal(moveCoord)
+        if (moveCoord) this.relayDiagonal(moveCoord)
     }
 
     constructor(creepID: Id<Creep>) {

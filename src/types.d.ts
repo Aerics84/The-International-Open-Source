@@ -955,7 +955,7 @@ declare global {
          */
         squadRequests: Set<string>
 
-        roomLogisticsRequests: { [key in RoomLogisticsRequestTypes]: { [ID: string]: RoomLogisticsRequest }}
+        roomLogisticsRequests: { [key in RoomLogisticsRequestTypes]: { [ID: string]: RoomLogisticsRequest } }
         powerTasks: { [ID: string]: PowerTask }
 
         attackingDefenderIDs: Set<Id<Creep>>
@@ -2007,7 +2007,9 @@ declare global {
         findRoomLogisticsRequest(args?: findNewRoomLogisticsRequestArgs): CreepRoomLogisticsRequest | 0
         findRoomLogisticsRequestTypes(args?: findNewRoomLogisticsRequestArgs): Set<RoomLogisticsRequestTypes>
         canAcceptRoomLogisticsRequest(requestType: RoomLogisticsRequestTypes, requestID: string): boolean
-        createBackupStoringStructuresRoomLogisticsRequest(types: Set<RoomLogisticsRequestTypes>): CreepRoomLogisticsRequest | 0
+        createBackupStoringStructuresRoomLogisticsRequest(
+            types: Set<RoomLogisticsRequestTypes>,
+        ): CreepRoomLogisticsRequest | 0
         findRoomLogisticRequestAmount(request: RoomLogisticsRequest): number
 
         runRoomLogisticsRequest(args?: findNewRoomLogisticsRequestArgs): number
@@ -2499,7 +2501,7 @@ declare global {
              */
             claim(requestName: string, communeName?: string): string
 
-            deleteClaimRequests(): string
+            deleteClaimRequests(requestName?: string): string
 
             /**
              * Responds, or if needed, creates, an attack request for a specified room, by a specified room

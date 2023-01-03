@@ -206,6 +206,8 @@ export class CommuneManager {
         this.remotesManager.run()
         this.haulerNeedManager.run()
 
+        this.room.roomManager.containerManager.runCommune()
+        this.room.roomManager.droppedResourceManager.runCommune()
         this.spawningStructuresManager.createRoomLogisticsRequests()
         this.storingStructuresManager.run()
         this.room.factoryManager()
@@ -391,7 +393,7 @@ export class CommuneManager {
         const level = this.room.controller.level
 
         return Math.min(
-            Math.floor(Math.pow((level - 3) * 50, 2.5) + this.room.memory.AT * 5 * Math.pow(level, 2)),
+            Math.floor(Math.pow((level - 3) * 50, 2.75) + this.room.memory.AT * 5 * Math.pow(level, 2)),
             RAMPART_HITS_MAX[level],
         )
     }
