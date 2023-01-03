@@ -416,26 +416,22 @@ Creep.prototype.advancedBuildCSite = function (cSite) {
 
     // Buld the cSite
 
-    if (this.build(cSite) === OK) {
-        // Find the build amount by finding the smaller of the creep's work and the progress left for the cSite divided by build power
+    if (this.build(cSite) !== OK) return RESULT_FAIL
 
-        const energySpentOnConstruction = Math.min(
-            this.parts.work * BUILD_POWER,
-            (cSite.progressTotal - cSite.progress) * BUILD_POWER,
-            this.nextStore.energy,
-        )
+    // Find the build amount by finding the smaller of the creep's work and the progress left for the cSite divided by build power
 
-        this.nextStore.energy -= energySpentOnConstruction
+    const energySpentOnConstruction = Math.min(
+        this.parts.work * BUILD_POWER,
+        (cSite.progressTotal - cSite.progress) * BUILD_POWER,
+        this.nextStore.energy,
+    )
 
-        // Add control points to total controlPoints counter and say the success
+    this.nextStore.energy -= energySpentOnConstruction
 
-        globalStatsUpdater(this.room.name, 'eob', energySpentOnConstruction)
-        this.message = `🚧${energySpentOnConstruction}`
+    // Add control points to total controlPoints counter and say the success
 
-        return RESULT_SUCCESS
-    }
-
-    // Inform true
+    globalStatsUpdater(this.room.name, 'eob', energySpentOnConstruction)
+    this.message = `🚧${energySpentOnConstruction}`
 
     return RESULT_SUCCESS
 }
@@ -1458,6 +1454,7 @@ Creep.prototype.roomLogisticsRequestManager = function () {
 
     const request = this.memory.RLRs[0]
     if (!request) return
+
     const target = findObjectWithID(request.TID)
 
     // Pickup type
