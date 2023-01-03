@@ -29,7 +29,7 @@ export class HaulerNeedManager {
 
         room.haulerNeed += room.structures.lab.length / 1.2
 
-        room.haulerNeed += room.structures.extension.length / 6
+        room.haulerNeed += room.structures.extension.length / 10
 
         room.haulerNeed += Memory.stats.rooms[room.name].eosp / 50
 

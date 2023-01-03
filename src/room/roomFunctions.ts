@@ -2380,7 +2380,7 @@ Room.prototype.createRoomLogisticsRequest = function (args) {
     else args.priority = Math.round(args.priority * 100) / 100
 
     const ID = internationalManager.newTickID()
-    /* this.visual.text(args.priority.toString(), args.target.pos) */
+    this.visual.text(args.priority.toString(), args.target.pos.x, args.target.pos.y)
     return (this.roomLogisticsRequests[args.type][ID] = {
         ID,
         type: args.type,
