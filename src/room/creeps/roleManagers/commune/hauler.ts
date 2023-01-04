@@ -177,15 +177,28 @@ export class Hauler extends Creep {
             const creep: Hauler = Game.creeps[creepName]
 
             creep.passiveRenew()
-            creep.runRoomLogisticsRequests()
 
-            customLog('HAULER RUN', creep.name)
+            if (creep.store.getCapacity() === creep.store.getFreeCapacity()) {
+                creep.runRoomLogisticsRequests()
+            } else {
+                for (const key in creep.store) {
+                    const resourceType = key as ResourceConstant
 
-            /* creep.room.visual.text((creep.nextStore.energy).toString(), creep.pos) */
+                    if (resourceType === RESOURCE_ENERGY) {
+                        creep.runRoomLogisticsRequests()
+                    } else {
+                        delete creep.memory.RLRs
 
-/*
-            creep.haul()
-             */
+                        creep.runRoomLogisticsRequests({
+                            types: new Set(['transfer']),
+                            conditions: request => {
+                                return request.resourceType === resourceType
+                            },
+                        })
+                        break
+                    }
+                }
+            }
         }
     }
 }

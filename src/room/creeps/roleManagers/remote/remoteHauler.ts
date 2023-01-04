@@ -153,7 +153,6 @@ export class RemoteHauler extends Creep {
         // If the creep is in the remote
 
         if (this.room.name === this.memory.RN) {
-
             if (!this.getRemoteSourceResources()) return false
 
             // We have enough resources, return home
@@ -231,13 +230,11 @@ export class RemoteHauler extends Creep {
      * @returns If the creep no longer needs energy
      */
     getRemoteSourceResources?() {
-
         const sourcePos = unpackPosList(Memory.rooms[this.memory.RN].SP[this.memory.SI])[0]
 
         // We aren't next to the source
 
         if (getRangeOfCoords(this.pos, sourcePos) > 1) {
-
             // Fulfill requests near the hauler
 
             this.runRoomLogisticsRequests({
@@ -409,7 +406,7 @@ export class RemoteHauler extends Creep {
         delete creepAtPos.moved
 
         // Trade memory
-/*
+        /*
         const newCreepAtPosMemory = JSON.parse(JSON.stringify(this.memory))
 
         this.memory = creepAtPos.memory
