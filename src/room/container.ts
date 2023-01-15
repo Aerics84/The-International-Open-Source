@@ -31,6 +31,7 @@ export class ContainerManager {
 
         for (const container of fastFillerContainers) {
             if (!container) continue
+            if (container.reserveStore.energy > container.store.getCapacity() * 0.8) continue
 
             this.roomManager.room.createRoomLogisticsRequest({
                 target: container,
@@ -40,14 +41,15 @@ export class ContainerManager {
                 priority: scalePriority(container.store.getCapacity(), container.reserveStore.energy, 20),
             })
 
-            this.roomManager.room.createRoomLogisticsRequest({
-                target: container,
-                threshold: container.store.getCapacity() * 0.6,
-                maxAmount: container.reserveStore.energy * 0.6,
-                onlyFull: true,
-                type: 'offer',
-                priority: scalePriority(container.store.getCapacity(), container.reserveStore.energy, 20, true),
-            })
+            if (container.reserveStore.energy < container.store.getCapacity() * 0.6) {
+                this.roomManager.room.createRoomLogisticsRequest({
+                    target: container,
+                    maxAmount: container.reserveStore.energy * 0.5,
+                    onlyFull: true,
+                    type: 'offer',
+                    priority: scalePriority(container.store.getCapacity(), container.reserveStore.energy, 20, true),
+                })
+            }
         }
     }
 
@@ -81,7 +83,7 @@ export class ContainerManager {
         this.roomManager.room.createRoomLogisticsRequest({
             target: link,
             type: 'transfer',
-            priority: 12.5 + scalePriority(link.store.getCapacity(), link.reserveStore.energy, 20),
+            priority: 12.5 + scalePriority(link.store.getCapacity(RESOURCE_ENERGY), link.reserveStore.energy, 20),
         })
     }
 

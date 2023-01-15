@@ -28,7 +28,6 @@ Object.defineProperties(RoomObject.prototype, {
     },
     nextStore: {
         get(this: AnyStoreStructure) {
-
             if (this._nextStore) return this._nextStore
 
             const parent = this
@@ -36,46 +35,17 @@ Object.defineProperties(RoomObject.prototype, {
 
             this._nextStore = new Proxy(referenceStore, {
                 get(target: CustomStore, resourceType: ResourceConstant) {
-
-                    if (parent instanceof Creep)
-                        customLog('GET', parent.name + ', ' + resourceType + ', ' + target[resourceType], {
-                            superPosition: 1,
-                        })
-
                     return target[resourceType] ?? 0
                 },
                 set(target: CustomStore, resourceType: ResourceConstant, newAmount) {
-
-                    if (parent instanceof Creep)
-                        customLog(
-                            'PRE CHECK',
-                            parent.name +
-                                ', ' +
-                                resourceType +
-                                ', ' +
-                                parent.usedNextStore +
-                                ', ' +
-                                parent.store.getCapacity(),
-                            { superPosition: 1 },
-                        )
                     if (parent._usedNextStore !== undefined) {
                         parent._usedNextStore += newAmount - (target[resourceType] ?? 0)
-                        if (parent instanceof Creep)
-                            customLog('USED', parent._usedNextStore + ', ' + (newAmount - (target[resourceType] ?? 0)), {
-                                superPosition: 1,
-                            })
                     }
-                    if (parent instanceof Creep)
-                        customLog('CHECK', newAmount + ', ' + target[resourceType], { superPosition: 1 })
+
                     // Update the change
 
                     target[resourceType] = newAmount
-                    if (parent instanceof Creep) customLog(
-                        'SECOND CHECK',
-                        newAmount + ', ' + target[resourceType] + ', ' + parent.nextStore[resourceType] + ', ' +
-                        parent.name,
-                        { superPosition: 1 },
-                    )
+
                     return true
                 },
             })
@@ -85,10 +55,6 @@ Object.defineProperties(RoomObject.prototype, {
     },
     usedNextStore: {
         get(this: RoomObject & { store?: StoreDefinition }) {
-            if (this instanceof Creep)
-                customLog('PRESENT USED', this.name + ', ' + this.nextStore.energy + ', ' + this._usedNextStore, {
-                    superPosition: 1,
-                })
             if (this._usedNextStore !== undefined) return this._usedNextStore
 
             this._usedNextStore = 0
@@ -97,7 +63,7 @@ Object.defineProperties(RoomObject.prototype, {
             for (let i = 0; i < keys.length; i++) {
                 this._usedNextStore += this.nextStore[keys[i] as ResourceConstant]
             }
-            if (this instanceof Creep) customLog('NEW USED', this._usedNextStore, { superPosition: 1 })
+
             return this._usedNextStore
         },
     },
@@ -118,7 +84,6 @@ Object.defineProperties(RoomObject.prototype, {
                     return target[resourceType] ?? 0
                 },
                 set(target: CustomStore, resourceType: ResourceConstant, newAmount) {
-
                     if (parent._usedReserveStore !== undefined) {
                         parent._usedReserveStore += newAmount - (target[resourceType] ?? 0)
                     }

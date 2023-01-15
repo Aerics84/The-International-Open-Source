@@ -193,7 +193,9 @@ Room.prototype.advancedFindPath = function (opts: PathOpts): RoomPosition[] {
 
                 if (roomMemory.SPs.length) {
                     for (const path of Game.rooms[roomName].sourcePaths) {
-                        for (const pos of path) opts.weightCoords[pos.roomName][packCoord(pos)] = 1
+                        for (const pos of path) {
+                            opts.weightCoords[pos.roomName][packCoord(pos)] = 1
+                        }
                     }
                 }
             } else if (roomMemory.T === 'remote') {
@@ -798,7 +800,7 @@ Room.prototype.scoutMyRemote = function (scoutingRoom) {
 
     // If the room isn't already a remote
 
-    if (this.memory.T !== 'remote') {
+    if (this.memory.T !== 'remote' && this.memory.T !== 'commune') {
         this.memory.T = 'remote'
 
         // Assign the room's commune as the scoutingRoom

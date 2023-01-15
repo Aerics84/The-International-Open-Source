@@ -572,13 +572,14 @@ Room.prototype.spawnRequester = function () {
             if (storage && this.controller.level >= 4) {
                 // If the storage is sufficiently full, provide x amount per y enemy in storage
 
-                if (this.resourcesInStoringStructures.energy < this.communeManager.storedEnergyBuildThreshold)
-                    return false
-
-                partsMultiplier += Math.pow(
-                    this.resourcesInStoringStructures.energy / (15000 + this.controller.level * 1000),
-                    2,
-                )
+                if (this.resourcesInStoringStructures.energy < this.communeManager.storedEnergyBuildThreshold) {
+                    partsMultiplier += estimatedIncome / 5
+                } else {
+                    partsMultiplier += Math.pow(
+                        this.resourcesInStoringStructures.energy / (15000 + this.controller.level * 1000),
+                        2,
+                    )
+                }
             }
 
             // Otherwise if there is no storage
@@ -1357,7 +1358,7 @@ Room.prototype.spawnRequester = function () {
                 partsMultiplier,
                 minCost: 100,
                 maxCostPerCreep: this.memory.MHC,
-                priority: minRemotePriority,
+                priority: minRemotePriority + 1.5,
                 memoryAdditions: {},
             }
         })(),

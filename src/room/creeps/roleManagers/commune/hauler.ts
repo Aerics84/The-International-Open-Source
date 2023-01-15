@@ -178,6 +178,8 @@ export class Hauler extends Creep {
 
             creep.passiveRenew()
 
+            //creep.runRoomLogisticsRequests()
+
             if (creep.store.getCapacity() === creep.store.getFreeCapacity()) {
                 creep.runRoomLogisticsRequests()
             } else {
@@ -187,8 +189,6 @@ export class Hauler extends Creep {
                     if (resourceType === RESOURCE_ENERGY) {
                         creep.runRoomLogisticsRequests()
                     } else {
-                        delete creep.memory.RLRs
-
                         creep.runRoomLogisticsRequests({
                             types: new Set(['transfer']),
                             conditions: request => {
@@ -198,6 +198,15 @@ export class Hauler extends Creep {
                         break
                     }
                 }
+            }
+
+            if (!creep.memory.RLRs.length) {
+                const goal = creep.room.storage ? creep.room.storage : creep.room.sources[0]
+
+                creep.createMoveRequest({
+                    origin: creep.pos,
+                    goals: [{ pos: goal.pos, range: 3 }],
+                })
             }
         }
     }

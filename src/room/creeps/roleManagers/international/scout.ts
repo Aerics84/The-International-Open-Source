@@ -71,7 +71,6 @@ export class Scout extends Creep {
     }
 
     findBestScoutTarget?() {
-
         this.findScoutTargets()
 
         // Find the closest room to the creep's commune
@@ -256,23 +255,24 @@ export class Scout extends Creep {
 
             // Try to go to the scoutTarget
 
-            if (creep.createMoveRequest({
-                origin: creep.pos,
-                goals: [
-                    {
-                        pos: new RoomPosition(25, 25, creep.memory.scT),
-                        range: 25,
-                    },
-                ],
-                avoidEnemyRanges: true,
-                plainCost: 1,
-                swampCost: 1,
-            }) === 'unpathable') {
-
+            if (
+                creep.createMoveRequest({
+                    origin: creep.pos,
+                    goals: [
+                        {
+                            pos: new RoomPosition(25, 25, creep.memory.scT),
+                            range: 25,
+                        },
+                    ],
+                    avoidEnemyRanges: true,
+                    plainCost: 1,
+                    swampCost: 1,
+                }) === 'unpathable'
+            ) {
                 let roomMemory: Partial<RoomMemory> = Memory.rooms[creep.memory.scT]
                 if (!roomMemory) roomMemory = (Memory.rooms[creep.memory.scT] as Partial<RoomMemory>) = {}
 
-                roomMemory.T = 'neutral'
+                //roomMemory.T = 'neutral'
                 roomMemory.LST = Game.time
 
                 delete creep.memory.scT
