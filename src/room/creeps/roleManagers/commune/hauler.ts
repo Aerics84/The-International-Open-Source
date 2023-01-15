@@ -25,15 +25,18 @@ export class Hauler extends Creep {
         const { room } = this
 
         let withdrawTargets = room.MAWT.filter(target => {
-            if (target instanceof Resource)
+            if (target instanceof Resource) {
                 return (
-                    target.reserveAmount >= this.store.getCapacity() * 0.2 || target.reserveAmount >= this.freeStore()
+                    ((target.resourceType === RESOURCE_ENERGY || room.storage) &&
+                        target.reserveAmount >= this.store.getCapacity() * 0.2) ||
+                    ((target.resourceType === RESOURCE_ENERGY || room.storage) &&
+                        target.reserveAmount >= this.freeStore())
                 )
-
-            return (
-                target.store.getUsedCapacity(RESOURCE_ENERGY) >= this.store.getCapacity(RESOURCE_ENERGY) ||
-                target.store.getUsedCapacity(RESOURCE_ENERGY) >= this.freeStore()
-            )
+            } else
+                return (
+                    target.store.getUsedCapacity(RESOURCE_ENERGY) >= this.store.getCapacity(RESOURCE_ENERGY) ||
+                    target.store.getUsedCapacity(RESOURCE_ENERGY) >= this.freeStore()
+                )
         })
 
         let transferTargets
@@ -174,15 +177,37 @@ export class Hauler extends Creep {
             const creep: Hauler = Game.creeps[creepName]
 
             creep.passiveRenew()
-            creep.runRoomLogisticsRequests()
 
-            customLog('HAULER RUN', creep.name)
+            //creep.runRoomLogisticsRequests()
 
-            /* creep.room.visual.text((creep.nextStore.energy).toString(), creep.pos) */
+            if (creep.store.getCapacity() === creep.store.getFreeCapacity()) {
+                creep.runRoomLogisticsRequests()
+            } else {
+                for (const key in creep.store) {
+                    const resourceType = key as ResourceConstant
 
-/*
-            creep.haul()
-             */
+                    if (resourceType === RESOURCE_ENERGY) {
+                        creep.runRoomLogisticsRequests()
+                    } else {
+                        creep.runRoomLogisticsRequests({
+                            types: new Set(['transfer']),
+                            conditions: request => {
+                                return request.resourceType === resourceType
+                            },
+                        })
+                        break
+                    }
+                }
+            }
+
+            if (!creep.memory.RLRs.length) {
+                const goal = creep.room.storage ? creep.room.storage : creep.room.sources[0]
+
+                creep.createMoveRequest({
+                    origin: creep.pos,
+                    goals: [{ pos: goal.pos, range: 3 }],
+                })
+            }
         }
     }
 }

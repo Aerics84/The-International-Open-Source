@@ -750,6 +750,8 @@ export class Quad {
             this.leader.say('EC')
 
             const enemyCreep = findClosestObject(this.leader.pos, enemyCreeps)
+            if (!enemyCreep) return false
+
             if (Memory.roomVisuals)
                 this.leader.room.visual.line(this.leader.pos, enemyCreep.pos, {
                     color: customColors.green,

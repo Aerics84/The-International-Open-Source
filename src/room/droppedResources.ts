@@ -1,7 +1,6 @@
 import { customLog, scalePriority } from 'international/utils'
 import { RoomManager } from 'room/room'
 
-
 export class DroppedResourceManager {
     roomManager: RoomManager
 
@@ -10,9 +9,7 @@ export class DroppedResourceManager {
     }
 
     runCommune() {
-
         for (const resource of this.roomManager.room.droppedResources) {
-
             if (resource.amount < 50) continue
 
             this.roomManager.room.createRoomLogisticsRequest({
@@ -25,9 +22,7 @@ export class DroppedResourceManager {
     }
 
     runRemote() {
-
         for (const resource of this.roomManager.room.droppedResources) {
-
             if (resource.resourceType !== RESOURCE_ENERGY) continue
             if (resource.amount < 50) continue
 
