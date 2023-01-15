@@ -7,13 +7,15 @@ export class Builder extends Creep {
     }
 
     preTickManager() {
-        if (!this.room.cSiteTarget || this.spawning) return
+    
+        if (!this.room.cSiteTarget) return
+        if (!this.room.communeManager.buildersMakeRequests) return
+        if (this.usedReserveStore > this.store.getCapacity() * 0.5) return
 
         this.room.roomManager.room.createRoomLogisticsRequest({
             target: this,
             type: 'transfer',
             priority: 8,
-            threshold: this.store.getCapacity() * 0.5,
         })
     }
 

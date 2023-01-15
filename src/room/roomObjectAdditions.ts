@@ -1,4 +1,4 @@
-import { allResources } from 'international/constants'
+import { allResources, customColors } from 'international/constants'
 import { customLog, findObjectWithID } from 'international/utils'
 
 Object.defineProperties(RoomObject.prototype, {
@@ -22,12 +22,13 @@ Object.defineProperties(RoomObject.prototype, {
 
             return (this._nextHits = this.hits)
         },
-        set(newEstimatedHits) {
-            this._nextHits = newEstimatedHits
+        set(newNextHits: number) {
+            this._nextHits = newNextHits
         },
     },
     nextStore: {
         get(this: AnyStoreStructure) {
+
             if (this._nextStore) return this._nextStore
 
             const parent = this
@@ -35,17 +36,17 @@ Object.defineProperties(RoomObject.prototype, {
 
             this._nextStore = new Proxy(referenceStore, {
                 get(target: CustomStore, resourceType: ResourceConstant) {
+
                     return target[resourceType] ?? 0
                 },
                 set(target: CustomStore, resourceType: ResourceConstant, newAmount) {
+
                     if (parent._usedNextStore !== undefined) {
                         parent._usedNextStore += newAmount - (target[resourceType] ?? 0)
                     }
-
                     // Update the change
 
                     target[resourceType] = newAmount
-
                     return true
                 },
             })
@@ -55,6 +56,7 @@ Object.defineProperties(RoomObject.prototype, {
     },
     usedNextStore: {
         get(this: RoomObject & { store?: StoreDefinition }) {
+
             if (this._usedNextStore !== undefined) return this._usedNextStore
 
             this._usedNextStore = 0
@@ -84,6 +86,7 @@ Object.defineProperties(RoomObject.prototype, {
                     return target[resourceType] ?? 0
                 },
                 set(target: CustomStore, resourceType: ResourceConstant, newAmount) {
+
                     if (parent._usedReserveStore !== undefined) {
                         parent._usedReserveStore += newAmount - (target[resourceType] ?? 0)
                     }

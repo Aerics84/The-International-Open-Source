@@ -37,7 +37,7 @@ import {
     getRangeOfCoords,
 } from 'international/utils'
 import { internationalManager } from 'international/international'
-import { pick, repeat } from 'lodash'
+import { any, pick, repeat } from 'lodash'
 import {
     packCoord,
     packPos,
@@ -379,8 +379,27 @@ Creep.prototype.builderGetEnergy = function () {
     // If there is a sufficient storing structure
 
     if (this.room.communeManager.buildersMakeRequests) return RESULT_SUCCESS
-
     if (!this.needsResources()) return RESULT_NO_ACTION
+
+    let conditions
+    if (this.room.anchor && this.room.structures.extension.length < 5) {
+
+        // Only get from around the fastFiller
+
+        conditions = (request: RoomLogisticsRequest) => {
+
+            return request.resourceType === RESOURCE_ENERGY && getRangeOfCoords(this.room.anchor, findObjectWithID(request.targetID).pos) <= 2
+        }
+    }
+    else {
+
+        // Get from anywhere
+
+        conditions = (request: RoomLogisticsRequest) => {
+            return request.resourceType === RESOURCE_ENERGY
+        }
+    }
+
 
     // We need energy, find a request
 
@@ -585,19 +604,14 @@ Creep.prototype.findOptimalSourceIndex = function () {
     this.say('FOSN')
 
     if (this.memory.SI !== undefined) return true
-
-    // Get the rooms anchor, if it's undefined inform false
-
     if (!room.anchor) return false
-
-    // Construct a creep threshold
 
     let creepThreshold = 1
 
     // So long as the creepThreshold is less than 4
 
     while (creepThreshold < 4) {
-        // Then loop through the source names and find the first one with open spots
+        // Find the first source with open spots
 
         for (const source of room.sourcesByEfficacy) {
             const index = source.index as 0 | 1
@@ -614,8 +628,6 @@ Creep.prototype.findOptimalSourceIndex = function () {
 
         creepThreshold += 1
     }
-
-    // No source was found, inform false
 
     return false
 }
@@ -1530,7 +1542,7 @@ Creep.prototype.findRoomLogisticsRequest = function (args) {
             bestRequest = request
         }
     }
-
+    
     let creepRequest: CreepRoomLogisticsRequest | 0
 
     if (!bestRequest) {
@@ -1794,6 +1806,7 @@ Creep.prototype.findRoomLogisticRequestAmount = function (request) {
 Creep.prototype.runRoomLogisticsRequest = function (args) {
     const request = this.findRoomLogisticsRequest(args)
     if (!request) return RESULT_FAIL
+    
     const target = findObjectWithID(request.TID)
 
     if (getRangeOfCoords(target.pos, this.pos) > 1) {
@@ -1804,7 +1817,7 @@ Creep.prototype.runRoomLogisticsRequest = function (args) {
 
         return RESULT_ACTION
     }
-
+    
     // Pickup type
 
     if (target instanceof Resource) {

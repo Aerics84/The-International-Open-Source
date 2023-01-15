@@ -236,6 +236,8 @@ export class CommuneManager {
 
         let CPUUsed = Game.cpu.getUsed()
 
+
+
         customLog('CPU TEST 1', Game.cpu.getUsed() - CPUUsed, {
             bgColor: customColors.red,
         })

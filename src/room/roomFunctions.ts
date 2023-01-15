@@ -31,6 +31,7 @@ import {
     findClosestClaimType,
     findClosestCommuneName,
     findCoordsInsideRect,
+    findObjectWithID,
     getRange,
     isNearRoomEdge,
     newID,
@@ -194,6 +195,7 @@ Room.prototype.advancedFindPath = function (opts: PathOpts): RoomPosition[] {
                 if (roomMemory.SPs.length) {
                     for (const path of Game.rooms[roomName].sourcePaths) {
                         for (const pos of path) {
+                            if (!opts.weightCoords[pos.roomName]) opts.weightCoords[pos.roomName] = {}
                             opts.weightCoords[pos.roomName][packCoord(pos)] = 1
                         }
                     }
@@ -2352,15 +2354,13 @@ Room.prototype.createRoomLogisticsRequest = function (args) {
     // Make sure we are not infringing on the threshold
 
     if (args.target instanceof Resource) {
-        if (!args.threshold) args.threshold = 1
 
         amount = (args.target as Resource).reserveAmount
 
-        if (amount < args.threshold) return RESULT_FAIL
+        if (amount < 1) return RESULT_FAIL
     } else if (args.type === 'transfer') {
-        if (!args.threshold) args.threshold = args.target.store.getCapacity(args.resourceType)
 
-        if (args.target.reserveStore[args.resourceType] >= args.threshold) return RESULT_FAIL
+        if (args.target.reserveStore[args.resourceType] >= args.target.store.getCapacity(args.resourceType)) return RESULT_FAIL
 
         amount = args.target.freeReserveStoreOf(args.resourceType)
         /* this.visual.text(args.target.reserveStore[args.resourceType].toString(), args.target.pos) */
@@ -2368,12 +2368,11 @@ Room.prototype.createRoomLogisticsRequest = function (args) {
 
     // Offer or withdraw types
     else {
-        if (!args.threshold) args.threshold = 1
         amount = args.target.reserveStore[args.resourceType]
 
         // We don't have enough resources to make a request
 
-        if (amount < args.threshold) return RESULT_FAIL
+        if (amount < 1) return RESULT_FAIL
 
         if (args.maxAmount) amount = Math.min(amount, Math.round(args.maxAmount))
     }
@@ -2391,6 +2390,28 @@ Room.prototype.createRoomLogisticsRequest = function (args) {
         amount: amount,
         priority: args.priority,
         onlyFull: args.onlyFull,
-        noReserve: !this.advancedLogistics, // Don't reserve if advancedLogistics is disabled
+        noReserve: !this.advancedLogistics || undefined, // Don't reserve if advancedLogistics is disabled
     })
+}
+
+Room.prototype.findStructureAtCoord = function(coord, structureType) {
+
+    return this.findStructureAtXY(coord.x, coord.y, structureType)
+}
+
+
+Room.prototype.findStructureAtXY = function(x, y, structureType) {
+
+    const structureIDs = this.structureCoords.get(packXYAsCoord(x, y))
+    if (!structureIDs) return false
+
+    for (const ID of structureIDs) {
+
+        const structure = findObjectWithID(ID)
+        if (structure.structureType !== structureType) continue
+
+        return structure
+    }
+
+    return false
 }
