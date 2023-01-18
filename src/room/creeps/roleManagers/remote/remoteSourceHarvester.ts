@@ -9,6 +9,7 @@ import {
     scalePriority,
 } from 'international/utils'
 import { packCoord, reverseCoordList, unpackPos, unpackPosList } from 'other/packrat'
+import { creepClasses } from 'room/creeps/creepClasses'
 import { RemoteHauler } from './remoteHauler'
 
 export class RemoteHarvester extends Creep {
@@ -74,41 +75,46 @@ export class RemoteHarvester extends Creep {
     findRemote?() {
         if (this.hasValidRemote()) return true
 
+        this.removeRemote()
+
         for (const remoteInfo of this.commune.remoteSourceIndexesByEfficacy) {
             const splitRemoteInfo = remoteInfo.split(' ')
             const remoteName = splitRemoteInfo[0]
+            const sourceIndex = parseInt(splitRemoteInfo[1]) as 0 | 1
             const remoteMemory = Memory.rooms[remoteName]
 
             // If there is no need
 
-            if (remoteMemory.data[RemoteData[`remoteSourceHarvester${this.memory.SI}`]] <= 0) continue
+            if (remoteMemory.T !== 'remote') continue
+            if (remoteMemory.CN !== this.commune.name) continue
+            if (remoteMemory.data[RemoteData.abandon]) continue
+            if (remoteMemory.data[RemoteData[`remoteSourceHarvester${sourceIndex}`]] <= 0) continue
 
-            this.assignRemote(remoteName)
+            this.assignRemote(remoteName, sourceIndex)
             return true
         }
 
         return false
     }
 
-    assignRemote?(remoteName: string) {
+    assignRemote?(remoteName: string, sourceIndex: 0 | 1) {
         this.memory.RN = remoteName
+        this.memory.SI = sourceIndex
 
         if (this.dying) return
 
-        const needs = Memory.rooms[remoteName].data
-
-        needs[RemoteData[`remoteSourceHarvester${this.memory.SI}`]] -= this.parts.work
+        Memory.rooms[remoteName].data[RemoteData[`remoteSourceHarvester${this.memory.SI}`]] -= this.parts.work
     }
 
     removeRemote?() {
-        if (!this.dying) {
-            const needs = Memory.rooms[this.memory.RN].data
-
-            needs[RemoteData[`remoteSourceHarvester${this.memory.SI}`]] += this.parts.work
+        if (!this.dying && this.memory.RN && Memory.rooms[this.memory.RN].data) {
+            Memory.rooms[this.memory.RN].data[RemoteData[`remoteSourceHarvester${this.memory.SI}`]] += this.parts.work
         }
 
         delete this.memory.RN
         delete this.memory.PC
+        delete this.memory.P
+        delete this.memory.GP
     }
 
     remoteActions?() {
@@ -133,7 +139,6 @@ export class RemoteHarvester extends Creep {
                 // If the creep isn't full enough to justify a request
 
                 if (this.nextStore.energy > this.store.getCapacity() * 0.5) {
-
                     this.room.createRoomLogisticsRequest({
                         target: this,
                         type: 'withdraw',

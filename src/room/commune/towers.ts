@@ -218,7 +218,6 @@ export class TowerManager {
 
     private createRoomLogisticsRequests() {
         for (const structure of this.communeManager.room.structures.tower) {
-
             if (structure.usedReserveStore > structure.store.getCapacity(RESOURCE_ENERGY) * 0.75) continue
 
             this.communeManager.room.createRoomLogisticsRequest({

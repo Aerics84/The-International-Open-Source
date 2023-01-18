@@ -195,7 +195,6 @@ Room.prototype.advancedFindPath = function (opts: PathOpts): RoomPosition[] {
                 if (roomMemory.SPs.length) {
                     for (const path of Game.rooms[roomName].sourcePaths) {
                         for (const pos of path) {
-
                             if (!opts.weightCoords[pos.roomName]) opts.weightCoords[pos.roomName] = {}
                             opts.weightCoords[pos.roomName][packCoord(pos)] = 1
                         }
@@ -711,7 +710,9 @@ Room.prototype.scoutEnemyRoom = function () {
     // Combat request creation
 
     this.createAttackCombatRequest({
-        maxTowerDamage: Math.ceil(this.structures.tower.length * TOWER_POWER_ATTACK * 1.1),
+        maxTowerDamage: Math.ceil(
+            this.structures.tower.filter(tower => tower.RCLActionable).length * TOWER_POWER_ATTACK * 1.1,
+        ),
         minDamage: 50,
     })
 
@@ -801,7 +802,7 @@ Room.prototype.scoutMyRemote = function (scoutingRoom) {
 
     // If the room isn't already a remote
 
-    if (this.memory.T !== 'remote') {
+    if (this.memory.T !== 'remote' && this.memory.T !== 'commune') {
         this.memory.T = 'remote'
 
         // Assign the room's commune as the scoutingRoom
@@ -2380,7 +2381,7 @@ Room.prototype.createRoomLogisticsRequest = function (args) {
     else args.priority = Math.round(args.priority * 100) / 100
 
     const ID = internationalManager.newTickID()
-    /* this.visual.text(args.priority.toString(), args.target.pos) */
+    this.visual.text(args.priority.toString(), args.target.pos.x, args.target.pos.y)
     return (this.roomLogisticsRequests[args.type][ID] = {
         ID,
         type: args.type,
