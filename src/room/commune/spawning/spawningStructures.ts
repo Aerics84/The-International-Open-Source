@@ -82,16 +82,18 @@ export class SpawningStructuresManager {
         for (const index in this.communeManager.room.spawnRequests) {
             const request = this.communeManager.room.spawnRequests[index]
             if (request.cost > this.communeManager.nextSpawnEnergyAvailable) {
-
                 customLog(
                     'Failed to spawn',
-                    `cost greater then nextSpawnEnergyAvailable, role: ${request.role}, cost: ${this.communeManager.nextSpawnEnergyAvailable} / ${request.cost}, body: ${JSON.stringify(request.bodyPartCounts)}`,
+                    `cost greater then nextSpawnEnergyAvailable, role: ${request.role}, cost: ${
+                        this.communeManager.nextSpawnEnergyAvailable
+                    } / ${request.cost}, body: ${JSON.stringify(request.bodyPartCounts)}`,
                     {
                         textColor: customColors.white,
                         bgColor: customColors.red,
                     },
                 )
-                break
+
+                continue
             }
 
             // We're trying to build a creep larger than this room can spawn
@@ -100,7 +102,9 @@ export class SpawningStructuresManager {
             if (request.cost > this.communeManager.room.energyCapacityAvailable) {
                 customLog(
                     'Failed to spawn',
-                    `cost greater then energyCapacityAvailable, role: ${request.role}, cost: ${this.communeManager.room.energyCapacityAvailable} / ${request.cost}, body: ${JSON.stringify(request.bodyPartCounts)}`,
+                    `cost greater then energyCapacityAvailable, role: ${request.role}, cost: ${
+                        this.communeManager.room.energyCapacityAvailable
+                    } / ${request.cost}, body: ${JSON.stringify(request.bodyPartCounts)}`,
                     {
                         textColor: customColors.white,
                         bgColor: customColors.red,
