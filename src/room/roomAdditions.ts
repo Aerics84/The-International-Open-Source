@@ -22,6 +22,7 @@ import {
     findFunctionCPU,
 } from 'international/utils'
 import { internationalManager } from 'international/international'
+import profiler from 'other/screeps-profiler'
 import {
     packCoord,
     packCoordList,
@@ -32,7 +33,7 @@ import {
     unpackPosList,
 } from 'other/packrat'
 
-Object.defineProperties(Room.prototype, {
+const roomAdditions = {
     global: {
         get() {
             if (global[this.name]) return global[this.name]
@@ -88,7 +89,7 @@ Object.defineProperties(Room.prototype, {
             if (this._sourcesByEfficacy) return this._sourcesByEfficacy
 
             this._sourcesByEfficacy = [].concat(this.sources)
-            //console.log(this.name)
+
             return this._sourcesByEfficacy.sort((a, b) => {
                 return this.sourcePaths[a.index].length - this.sourcePaths[b.index].length
             })
@@ -1160,19 +1161,22 @@ Object.defineProperties(Room.prototype, {
             ]
 
             for (const fastFillerPos of rawFastFillerPositions) {
-
                 const adjacentStructuresByType: Partial<Record<StructureConstant, number>> = {
                     spawn: 0,
                     extension: 0,
                     container: 0,
                     link: 0,
                 }
-                const adjacentCoords = findCoordsInsideRect(fastFillerPos.x - 1, fastFillerPos.y - 1, fastFillerPos.x + 1, fastFillerPos.y + 1)
+                const adjacentCoords = findCoordsInsideRect(
+                    fastFillerPos.x - 1,
+                    fastFillerPos.y - 1,
+                    fastFillerPos.x + 1,
+                    fastFillerPos.y + 1,
+                )
 
                 // Check coords around the fast filler pos for relevant structures
 
                 for (const coord of adjacentCoords) {
-
                     const structuresAtCoord = this.structureCoords.get(packCoord(coord))
                     if (!structuresAtCoord) continue
 
@@ -1361,7 +1365,9 @@ Object.defineProperties(Room.prototype, {
 
             if (!this.anchor) return false
 
-            const structure = this.findStructureAtXY(this.anchor.x - 2, this.anchor.y, STRUCTURE_CONTAINER) as StructureContainer | false
+            const structure = this.findStructureAtXY(this.anchor.x - 2, this.anchor.y, STRUCTURE_CONTAINER) as
+                | StructureContainer
+                | false
             this._fastFillerContainerLeft = structure
 
             if (!structure) return false
@@ -1381,7 +1387,9 @@ Object.defineProperties(Room.prototype, {
 
             if (!this.anchor) return false
 
-            const structure = this.findStructureAtXY(this.anchor.x + 2, this.anchor.y, STRUCTURE_CONTAINER) as StructureContainer | false
+            const structure = this.findStructureAtXY(this.anchor.x + 2, this.anchor.y, STRUCTURE_CONTAINER) as
+                | StructureContainer
+                | false
             this._fastFillerContainerRight = structure
 
             if (!structure) return false
@@ -1403,7 +1411,9 @@ Object.defineProperties(Room.prototype, {
             const centerUpgradePos = this.centerUpgradePos
             if (!centerUpgradePos) return false
 
-            const structure = this.findStructureAtCoord(centerUpgradePos, STRUCTURE_CONTAINER) as StructureContainer | false
+            const structure = this.findStructureAtCoord(centerUpgradePos, STRUCTURE_CONTAINER) as
+                | StructureContainer
+                | false
             this._controllerContainer = structure
 
             if (!structure) return false
@@ -1425,7 +1435,9 @@ Object.defineProperties(Room.prototype, {
             const mineralHarvestPos = this.mineralPositions[0]
             if (!mineralHarvestPos) return false
 
-            const structure = this.findStructureAtCoord(mineralHarvestPos, STRUCTURE_CONTAINER) as StructureContainer | false
+            const structure = this.findStructureAtCoord(mineralHarvestPos, STRUCTURE_CONTAINER) as
+                | StructureContainer
+                | false
             this._mineralContainer = structure
 
             if (!structure) return false
@@ -1492,7 +1504,9 @@ Object.defineProperties(Room.prototype, {
             const hubAnchor = unpackNumAsCoord(this.memory.stampAnchors.hub[0])
             if (!hubAnchor) return false
 
-            const structure = this.findStructureAtXY(hubAnchor.x, hubAnchor.y + 1, STRUCTURE_LINK) as StructureLink | false
+            const structure = this.findStructureAtXY(hubAnchor.x, hubAnchor.y + 1, STRUCTURE_LINK) as
+                | StructureLink
+                | false
             this._hubLink = structure
 
             if (!structure) return false
@@ -2345,4 +2359,8 @@ Object.defineProperties(Room.prototype, {
             return (this._advancedLogistics = this.storage !== undefined || this.terminal !== undefined)
         },
     },
-} as PropertyDescriptorMap & ThisType<Room>)
+} as PropertyDescriptorMap & ThisType<Room>
+
+profiler.registerObject(roomAdditions, 'roomAdditions')
+
+Object.defineProperties(Room.prototype, roomAdditions)
