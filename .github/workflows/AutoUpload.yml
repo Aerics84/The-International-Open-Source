@@ -2,9 +2,9 @@
 name: Auto upload
 
 on:
-     push:
+    push:
         branches:
-          - Main
+            - Main
 jobs:
      VerifyUpload:
           timeout-minutes: 129600

@@ -14,14 +14,12 @@ export class ContainerManager {
     }
 
     runCommune() {
-        let CPUUsed = Game.cpu.getUsed()
         this.runSourceContainers()
         this.runFastFillerContainers()
         this.runControllerContainer()
+        this.runControllerLink()
+        this.runControllerLink()
         this.runMineralContainer()
-        customLog('CPU TEST 1', Game.cpu.getUsed() - CPUUsed, {
-            bgColor: customColors.red,
-        })
     }
 
     private runFastFillerContainers() {
@@ -79,6 +77,17 @@ export class ContainerManager {
         })
     }
 
+    private runControllerLink() {
+        const link = this.roomManager.room.controllerLink
+        if (!link || this.roomManager.room.creepsFromRoom['hubHauler'].length > 0) return
+
+        this.roomManager.room.createRoomLogisticsRequest({
+            target: link,
+            type: 'transfer',
+            priority: 12.5 + scalePriority(link.store.getCapacity(RESOURCE_ENERGY), link.reserveStore.energy, 20),
+        })
+    }
+
     private runMineralContainer() {
         const container = this.roomManager.room.mineralContainer
         if (!container) return
@@ -90,7 +99,7 @@ export class ContainerManager {
             resourceType,
             type: 'withdraw',
             onlyFull: true,
-            priority: 20 + scalePriority(container.store.getCapacity(), container.reserveStore[resourceType], 20, true),
+            priority: 5 + scalePriority(container.store.getCapacity(), container.reserveStore[resourceType], 20, true),
         })
     }
 }

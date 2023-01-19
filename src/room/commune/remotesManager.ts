@@ -52,7 +52,7 @@ export class RemotesManager {
 
             // Every x ticks ensure enemies haven't blocked off too much of the path
 
-            if (randomTick(100)) {
+            if (randomTick(50)) {
                 const safeDistance = advancedFindDistance(room.name, remoteName, {
                     typeWeights: remoteTypeWeights,
                     avoidAbandonedRemotes: true,
@@ -148,7 +148,7 @@ export class RemotesManager {
         for (const remoteName of this.communeManager.room.memory.remotes) {
             const remoteMemory = Memory.rooms[remoteName]
 
-            if (remoteMemory.data[RemoteData.abandon]) continue
+            if (remoteMemory.data && remoteMemory.data[RemoteData.abandon]) continue
 
             const remote = Game.rooms[remoteName]
             const isReserved =

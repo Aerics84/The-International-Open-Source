@@ -89,6 +89,7 @@ const roomAdditions = {
             if (this._sourcesByEfficacy) return this._sourcesByEfficacy
 
             this._sourcesByEfficacy = [].concat(this.sources)
+
             return this._sourcesByEfficacy.sort((a, b) => {
                 return this.sourcePaths[a.index].length - this.sourcePaths[b.index].length
             })
@@ -530,9 +531,13 @@ const roomAdditions = {
             if (this.controller && (this.controller.my || this.controller.reservation))
                 return this._combatStructureTargets
 
-            if (this.controller.owner && Memory.allyPlayers.includes(this.controller.owner.username))
+            if (this.controller && this.controller.owner && Memory.allyPlayers.includes(this.controller.owner.username))
                 return this._combatStructureTargets
-            if (this.controller.reservation && Memory.allyPlayers.includes(this.controller.reservation.username))
+            if (
+                this.controller &&
+                this.controller.reservation &&
+                Memory.allyPlayers.includes(this.controller.reservation.username)
+            )
                 return this._combatStructureTargets
 
             this._combatStructureTargets = this._combatStructureTargets.concat(this.structures.spawn)
@@ -989,6 +994,15 @@ const roomAdditions = {
                 // The creep has a packedPos
 
                 this._usedUpgradePositions.add(creep.memory.PC)
+            }
+
+            // If a source container / link is nearby block the pos
+
+            for (const container of this.sourceContainers) {
+                this._usedUpgradePositions.add(packPos(container.pos))
+            }
+            for (const links of this.sourceLinks) {
+                this._usedUpgradePositions.add(packPos(links.pos))
             }
 
             if (this.controllerLink) this._usedUpgradePositions.add(packPos(this.controllerLink.pos))
