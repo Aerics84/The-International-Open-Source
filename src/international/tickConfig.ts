@@ -94,6 +94,10 @@ class TickConfig {
     }
 
     private configClaimRequests() {
+        // If their are alrady over 90 cunstruction sites stop adding new claim requests
+
+        if (Memory.constructionSites.length > 80) return
+
         let reservedGCL = Game.gcl.level - global.communes.size
 
         // Subtract the number of claimRequests with responders

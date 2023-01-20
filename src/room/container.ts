@@ -80,6 +80,7 @@ export class ContainerManager {
     private runControllerLink() {
         const link = this.roomManager.room.controllerLink
         if (!link || this.roomManager.room.creepsFromRoom['hubHauler'].length > 0) return
+        if (link.reserveStore.energy > link.store.getCapacity(RESOURCE_ENERGY) * 0.8) return
 
         this.roomManager.room.createRoomLogisticsRequest({
             target: link,
