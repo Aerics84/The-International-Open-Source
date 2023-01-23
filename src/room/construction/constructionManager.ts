@@ -28,7 +28,7 @@ export function constructionManager(room: Room) {
         if (!centerUpgradePos) return
 
         const controllerContainer = room.controllerContainer
-        if (room.controller.level >= 5) {
+        if (room.controller.level >= 5 && room.hubLink) {
             if (controllerContainer) controllerContainer.destroy()
 
             const controllerLink = room.controllerLink
