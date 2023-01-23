@@ -18,7 +18,7 @@ export class HubHauler extends Creep {
 
         // Otherwise move to the hub and inform true
 
-        this.say('⏩H')
+        this.message = '⏩H'
 
         this.createMoveRequest({
             origin: this.pos,
@@ -42,7 +42,7 @@ export class HubHauler extends Creep {
 
         // Whenever we have a reservation, we should have a matching withdraw and transfer, so we should never
         // get here with anything.  If we do, it'll never be gotten rid of, so just transfer anything we have to the store
-/*
+        /*
         if (this.store.getFreeCapacity() === 0) {
             const resource = Object.keys(this.store)[0] as ResourceConstant
             this.createCreepRoomLogisticsRequest('transfer', (storage || terminal).id, this.store[resource], resource)
@@ -55,6 +55,7 @@ export class HubHauler extends Creep {
 
         //Fill the Link before the storage/terminal because the storage transfers can take a long time,
         // the link transfers are just 2 or 4 ticks long.
+
         if (this.reserveHubLinkTransfer()) return
         if (this.reserveHubLinkWithdraw()) return
 
@@ -520,7 +521,7 @@ export class HubHauler extends Creep {
             if (creep.travelToHub()) continue
 
             creep.createCreepRoomLogisticsRequests()
-/*
+            /*
             // If the creep has no reservations but is full
 
             if (!creep.memory.RLRs.length && creep.store.getFreeCapacity() === 0) {

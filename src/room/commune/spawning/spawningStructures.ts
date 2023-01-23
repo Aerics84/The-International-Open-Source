@@ -19,7 +19,7 @@ export class SpawningStructuresManager {
      * Assign spawnIDs to creeps
      */
     public organizeSpawns() {
-        const spawns = this.communeManager.structures.spawn
+        const spawns = this.communeManager.room.structures.spawn
         if (!spawns.length) return
 
         // Find spawns that are and aren't spawning
@@ -50,7 +50,7 @@ export class SpawningStructuresManager {
 
         if (Memory.CPULogging) var managerCPUStart = Game.cpu.getUsed()
 
-        if (!this.communeManager.structures.spawn.length) return
+        if (!this.communeManager.room.structures.spawn.length) return
 
         this.runSpawning()
         this.test()

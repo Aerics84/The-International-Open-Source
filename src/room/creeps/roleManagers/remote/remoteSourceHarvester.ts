@@ -230,7 +230,7 @@ export class RemoteHarvester extends Creep {
      *
      */
     travelToSource?(sourceIndex: number): boolean {
-        this.say('🚬')
+        this.message = '🚬'
 
         // Unpack the harvestPos
 
@@ -243,7 +243,7 @@ export class RemoteHarvester extends Creep {
 
         // Otherwise say the intention and create a moveRequest to the creep's harvestPos, and inform the attempt
 
-        this.say(`⏩ ${sourceIndex}`)
+        this.message = `⏩ ${sourceIndex}`
 
         this.createMoveRequestByPath(
             {
@@ -304,7 +304,7 @@ export class RemoteHarvester extends Creep {
                 continue
             }
 
-            creep.say(creep.memory.RN)
+            creep.message = creep.memory.RN
 
             const sourcePos = unpackPosList(Memory.rooms[creep.memory.RN].SP[creep.memory.SI])[0]
 

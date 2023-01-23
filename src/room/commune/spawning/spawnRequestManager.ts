@@ -392,7 +392,7 @@ Room.prototype.spawnRequester = function () {
 
             const fastFillerPositionsCount = this.fastFillerPositions.length
             if (!fastFillerPositionsCount) return false
-            
+
             priority = 0.75
 
             let totalFastFillerEnergy = 0
@@ -788,7 +788,7 @@ Room.prototype.spawnRequester = function () {
 
                 if (this.resourcesInStoringStructures.energy >= this.communeManager.storedEnergyUpgradeThreshold)
                     partsMultiplier = Math.pow(
-                        this.resourcesInStoringStructures.energy / (8000 + this.controller.level * 1000),
+                        (this.resourcesInStoringStructures.energy - this.communeManager.storedEnergyUpgradeThreshold * 0.5) / (6000 + this.controller.level * 2000),
                         2,
                     )
                 // Otherwise, set partsMultiplier to 0

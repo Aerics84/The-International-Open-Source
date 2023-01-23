@@ -7,6 +7,7 @@ import {
     findObjectWithID,
     getRange,
     getRangeOfCoords,
+    makeRoomCoord,
     unpackNumAsCoord,
 } from 'international/utils'
 import { TerminalManager } from './terminal/terminal'
@@ -50,6 +51,7 @@ import { ContainerManager } from '../container'
 import { StoringStructuresManager } from './storingStructures'
 import { DroppedResourceManager } from 'room/droppedResources'
 import { LinkManager } from './links'
+import { profiler } from 'other/screeps-profiler'
 
 export class CommuneManager {
     // Managers
@@ -101,12 +103,10 @@ export class CommuneManager {
     }
 
     room: Room
-    structures: OrganizedStructures
     nextSpawnEnergyAvailable: number
 
     public update(room: Room) {
         this.room = room
-        this.structures = room.structures
     }
 
     preTickRun() {
@@ -231,11 +231,14 @@ export class CommuneManager {
     }
 
     private test() {
+
+        customLog('room name', JSON.stringify(makeRoomCoord(this.room.name)))
+
         return
 
         let CPUUsed = Game.cpu.getUsed()
 
-        customLog('CPU TEST 1', Game.cpu.getUsed() - CPUUsed, {
+        customLog('CPU TEST 1 ' + this.room.name, Game.cpu.getUsed() - CPUUsed, {
             bgColor: customColors.red,
         })
     }

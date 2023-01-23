@@ -1,6 +1,14 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
 
+interface OutputArgs {
+    maxLines?: number
+    /**
+     * Wether to sort by average. Default is false
+     */
+    byAvg?: boolean
+}
+
 let usedOnStart = 0
 let enabled = false
 let depth = 0
@@ -15,62 +23,6 @@ function AlreadyWrappedError() {
 function setupProfiler() {
     depth = 0 // reset depth, this needs to be done each tick.
     parentFn = '(tick)'
-    Game.profiler = {
-        stream(duration, filter) {
-            setupMemory('stream', duration || 10, filter)
-        },
-        email(duration, filter) {
-            setupMemory('email', duration || 100, filter)
-        },
-        profile(duration, filter) {
-            setupMemory('profile', duration || 100, filter)
-        },
-        background(filter) {
-            setupMemory('background', false, filter)
-        },
-        callgrind() {
-            const id = `id${Math.random()}`
-            /* eslint-disable */
-            const download = `
-<script>
-  var element = document.getElementById('${id}');
-  if (!element) {
-    element = document.createElement('a');
-    element.setAttribute('id', '${id}');
-    element.setAttribute('href', 'data:text/plain;charset=utf-8,${encodeURIComponent(Profiler.callgrind())}');
-    element.setAttribute('download', 'callgrind.out.${Game.time}');
-
-    element.style.display = 'none';
-    document.body.appendChild(element);
-
-    element.click();
-  }
-</script>
-      `
-            /* eslint-enable */
-            console.log(
-                download
-                    .split('\n')
-                    .map(s => s.trim())
-                    .join(''),
-            )
-        },
-        restart() {
-            if (Profiler.isProfiling()) {
-                const filter = Memory.profiler.filter
-                let duration = false
-                if (!!Memory.profiler.disableTick) {
-                    // Calculate the original duration, profile is enabled on the tick after the first call,
-                    // so add 1.
-                    duration = Memory.profiler.disableTick - Memory.profiler.enabledTick + 1
-                }
-                const type = Memory.profiler.type
-                setupMemory(type, duration, filter)
-            }
-        },
-        reset: resetMemory,
-        output: Profiler.output,
-    }
 
     overloadCPUCalc()
 }
@@ -272,58 +224,56 @@ const Profiler = {
         return body
     },
 
-    output(passedOutputLengthLimit) {
-        const outputLengthLimit = passedOutputLengthLimit || 1000
-        if (!Memory.profiler || !Memory.profiler.enabledTick) {
-            return 'Profiler not active.'
-        }
+    output(args: OutputArgs = {}) {
+        if (!args.maxLines) args.maxLines = Infinity
+        if (!Memory.profiler || !Memory.profiler.enabledTick) return 'Profiler not active.'
 
         const endTick = Math.min(Memory.profiler.disableTick || Game.time, Game.time)
         const startTick = Memory.profiler.enabledTick
         const elapsedTicks = endTick - startTick + 1
         const header = 'calls\t\ttime\t\tavg\t\tfunction'
-        const footer = [
-            `Avg: ${(Memory.profiler.totalTime / elapsedTicks).toFixed(2)}`,
-            `Total: ${Memory.profiler.totalTime.toFixed(2)}`,
-            `Ticks: ${elapsedTicks}`,
-        ].join('\t')
-
         const lines = [header]
-        let currentLength = header.length + 1 + footer.length
-        const allLines = Profiler.lines()
-        let done = false
-        while (!done && allLines.length) {
-            const line = allLines.shift()
-            // each line added adds the line length plus a new line character.
-            if (currentLength + line.length + 1 < outputLengthLimit) {
-                lines.push(line)
-                currentLength += line.length + 1
-            } else {
-                done = true
-            }
+
+        for (const line of Profiler.lines(args.byAvg)) {
+            if (lines.length > args.maxLines) break
+            lines.push(line)
         }
+
+        const footer = [
+            `Ticks: ${elapsedTicks}`,
+            `Time: ${Memory.profiler.totalTime.toFixed(2)}`,
+            `Per tick: ${(Memory.profiler.totalTime / elapsedTicks).toFixed(2)}`,
+        ].join('\t')
         lines.push(footer)
+
         return lines.join('\n')
     },
 
-    lines() {
-        const stats = Object.keys(Memory.profiler.map)
-            .map(functionName => {
-                const functionCalls = Memory.profiler.map[functionName]
-                return {
-                    name: functionName,
-                    calls: functionCalls.calls,
-                    totalTime: functionCalls.time,
-                    averageTime: functionCalls.time / functionCalls.calls,
-                }
+    lines(byAvg: boolean) {
+        const stats = Object.keys(Memory.profiler.map).map(functionName => {
+            const functionCalls = Memory.profiler.map[functionName]
+            return {
+                name: functionName,
+                calls: functionCalls.calls,
+                totalTime: functionCalls.time,
+                averageTime: functionCalls.time / functionCalls.calls,
+            }
+        })
+
+        if (byAvg) {
+            stats.sort((val1, val2) => {
+                return val2.averageTime - val1.averageTime
             })
-            .sort((val1, val2) => {
+        } else {
+            stats.sort((val1, val2) => {
                 return val2.totalTime - val1.totalTime
             })
+        }
 
         const lines = stats.map(data => {
-            return [data.calls, data.totalTime.toFixed(1), data.averageTime.toFixed(3), data.name].join('\t\t')
+            return [data.calls, data.totalTime.toFixed(2), data.averageTime.toFixed(3), data.name].join('\t\t')
         })
+        lines.splice(lines.length - 1)
 
         return lines
     },
@@ -441,7 +391,67 @@ const Profiler = {
     },
 }
 
-export default {
+global.profiler = {
+    stream(duration, filter) {
+        setupMemory('stream', duration || 10, filter)
+    },
+    email(duration, filter) {
+        setupMemory('email', duration || 100, filter)
+    },
+    profile(duration: number = 100, filter?: any) {
+        if (!enabled) profiler.enable()
+
+        setupMemory('profile', duration, filter)
+        return `Profiling for ${duration} ticks`
+    },
+    background(filter) {
+        setupMemory('background', false, filter)
+    },
+    callgrind() {
+        const id = `id${Math.random()}`
+        /* eslint-disable */
+        const download = `
+<script>
+var element = document.getElementById('${id}');
+if (!element) {
+element = document.createElement('a');
+element.setAttribute('id', '${id}');
+element.setAttribute('href', 'data:text/plain;charset=utf-8,${encodeURIComponent(Profiler.callgrind())}');
+element.setAttribute('download', 'callgrind.out.${Game.time}');
+
+element.style.display = 'none';
+document.body.appendChild(element);
+
+element.click();
+}
+</script>
+  `
+        /* eslint-enable */
+        console.log(
+            download
+                .split('\n')
+                .map(s => s.trim())
+                .join(''),
+        )
+    },
+    restart() {
+        if (Profiler.isProfiling()) {
+            const filter = Memory.profiler.filter
+            let duration = false
+            if (!!Memory.profiler.disableTick) {
+                // Calculate the original duration, profile is enabled on the tick after the first call,
+                // so add 1.
+                duration = Memory.profiler.disableTick - Memory.profiler.enabledTick + 1
+            }
+            const type = Memory.profiler.type
+            setupMemory(type, duration, filter)
+        }
+    },
+    reset: resetMemory,
+    output: Profiler.output,
+}
+
+const profiler = {
     wrap(callback) {
         if (enabled) {
             setupProfiler()
@@ -486,3 +496,4 @@ export default {
     registerFN: profileFunction,
     registerClass: profileObjectFunctions,
 }
+export { profiler }

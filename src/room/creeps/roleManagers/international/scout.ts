@@ -150,7 +150,7 @@ export class Scout extends Creep {
 
         if (room.name !== this.memory.siT) return true
 
-        this.say('🔤')
+        this.message = '🔤'
 
         // Construct the signMessage
 
@@ -201,7 +201,7 @@ export class Scout extends Creep {
             )
                 return true
 
-            this.say(this.moveRequest.toString())
+            this.message = this.moveRequest.toString()
 
             return false
         }
@@ -226,7 +226,7 @@ export class Scout extends Creep {
             // If the creep is in the scoutTarget
 
             if (creep.memory.scT === room.name) {
-                creep.say('👁️')
+                creep.message = '👁️'
 
                 // Get information about the room
 
@@ -247,7 +247,7 @@ export class Scout extends Creep {
 
             // Say the scoutTarget
 
-            creep.say(`🔭${creep.memory.scT.toString()}`)
+            creep.message = `🔭${creep.memory.scT.toString()}`
 
             if (!creep.advancedSignController()) continue
 
