@@ -92,7 +92,8 @@ export class SpawningStructuresManager {
                         bgColor: customColors.red,
                     },
                 )
-                break
+
+                continue
             }
 
             // We're trying to build a creep larger than this room can spawn
@@ -269,6 +270,7 @@ export class SpawningStructuresManager {
         for (const structure of this.communeManager.room.spawningStructuresByNeed) {
             this.communeManager.room.createRoomLogisticsRequest({
                 target: structure,
+                onlyFull: true,
                 type: 'transfer',
                 priority: 3,
             })

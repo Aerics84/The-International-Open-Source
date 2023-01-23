@@ -14,10 +14,11 @@ export class ContainerManager {
     }
 
     runCommune() {
-
         this.runSourceContainers()
         this.runFastFillerContainers()
         this.runControllerContainer()
+        this.runControllerLink()
+        this.runControllerLink()
         this.runMineralContainer()
     }
 
@@ -76,6 +77,18 @@ export class ContainerManager {
         })
     }
 
+    private runControllerLink() {
+        const link = this.roomManager.room.controllerLink
+        if (!link || this.roomManager.room.creepsFromRoom['hubHauler'].length > 0) return
+        if (link.reserveStore.energy > link.store.getCapacity(RESOURCE_ENERGY) * 0.8) return
+
+        this.roomManager.room.createRoomLogisticsRequest({
+            target: link,
+            type: 'transfer',
+            priority: 12.5 + scalePriority(link.store.getCapacity(RESOURCE_ENERGY), link.reserveStore.energy, 20),
+        })
+    }
+
     private runMineralContainer() {
         const container = this.roomManager.room.mineralContainer
         if (!container) return
@@ -87,7 +100,7 @@ export class ContainerManager {
             resourceType,
             type: 'withdraw',
             onlyFull: true,
-            priority: 20 + scalePriority(container.store.getCapacity(), container.reserveStore[resourceType], 20, true),
+            priority: 5 + scalePriority(container.store.getCapacity(), container.reserveStore[resourceType], 20, true),
         })
     }
 }
