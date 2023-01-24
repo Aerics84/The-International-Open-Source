@@ -361,13 +361,13 @@ Room.prototype.spawnRequester = function () {
 
     this.constructSpawnRequests(
         ((): SpawnRequestOpts | false => {
-
             if (this.controller.level < 5) return false
             if (!storage) return false
 
             // There is no hubLink and another link, or no terminal
 
-            if ((!this.hubLink || this.structures.link.length < 2) && (!terminal || !terminal.RCLActionable)) return false
+            if ((!this.hubLink || this.structures.link.length < 2) && (!terminal || !terminal.RCLActionable))
+                return false
 
             role = 'hubHauler'
 
@@ -788,7 +788,9 @@ Room.prototype.spawnRequester = function () {
 
                 if (this.resourcesInStoringStructures.energy >= this.communeManager.storedEnergyUpgradeThreshold)
                     partsMultiplier = Math.pow(
-                        (this.resourcesInStoringStructures.energy - this.communeManager.storedEnergyUpgradeThreshold * 0.5) / (6000 + this.controller.level * 2000),
+                        (this.resourcesInStoringStructures.energy -
+                            this.communeManager.storedEnergyUpgradeThreshold * 0.5) /
+                            (6000 + this.controller.level * 2000),
                         2,
                     )
                 // Otherwise, set partsMultiplier to 0
@@ -1030,7 +1032,6 @@ Room.prototype.spawnRequester = function () {
     )
 
     for (const remoteInfo of this.remoteSourceIndexesByEfficacy) {
-        if (Memory.stats.cpu.usage / Game.cpu.limit > 0.95) break
         const splitRemoteInfo = remoteInfo.split(' ')
         const remoteName = splitRemoteInfo[0]
         const sourceIndex = parseInt(splitRemoteInfo[1]) as 0 | 1
@@ -1102,7 +1103,6 @@ Room.prototype.spawnRequester = function () {
     const remoteNamesByEfficacy = this.remoteNamesBySourceEfficacy
 
     for (let index = 0; index < remoteNamesByEfficacy.length; index += 1) {
-        if (Memory.stats.cpu.usage / Game.cpu.limit > 0.95) break
         const remoteName = remoteNamesByEfficacy[index]
         const remoteData = Memory.rooms[remoteName].data
 
