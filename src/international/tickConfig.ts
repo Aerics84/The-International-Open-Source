@@ -98,7 +98,7 @@ class TickConfig {
 
         if (Memory.constructionSites.length > 80) return
 
-        let reservedGCL = Game.gcl.level - global.communes.size
+        let reservedGCL = Game.gcl.level - global.communes.size - 2
 
         // Subtract the number of claimRequests with responders
 
