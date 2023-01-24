@@ -80,6 +80,12 @@ Room.prototype.communeConstructionPlacement = function () {
                         if (impassableStructure) continue
                     }
 
+                    if (structureType === STRUCTURE_LINK) {
+                        if (!this.hubLink && stampType !== 'hub') continue
+                        if (!this.controllerLink) continue
+                        if (!this.fastFillerLink && stampType !== 'fastFiller') continue
+                    }
+
                     if (this.createConstructionSite(x, y, structureType as BuildableStructureConstant) === OK)
                         placed += 1
                 }
