@@ -192,7 +192,7 @@ Creep.prototype.findUpgradePos = function () {
     for (const pos of room.upgradePositions) {
         // Construct the packedPos using pos
 
-        const packedPos = packCoord(pos)
+        const packedPos = packPos(pos)
 
         // Iterate if the pos is used
 
@@ -217,14 +217,12 @@ Creep.prototype.advancedUpgradeController = function () {
     let controllerStructure: StructureLink | StructureContainer | undefined = room.controllerContainer
 
     const controllerLink = room.controllerLink
-    // console.log('structure', controllerStructure, this.name)
     if (!controllerStructure && controllerLink && controllerLink.RCLActionable) controllerStructure = controllerLink
 
     // If there is a controllerContainer
 
     if (controllerStructure) {
         const upgradePos = this.findUpgradePos()
-        // console.log('pos', upgradePos, this.name)
         if (!upgradePos) return false
 
         if (getRangeOfCoords(this.pos, upgradePos) > 0) {
@@ -1092,7 +1090,7 @@ Creep.prototype.findQuadBulldozeTargets = function (goalPos) {
 }
 
 Creep.prototype.manageSpawning = function (spawn: StructureSpawn) {
-    if (spawn.spawning.remainingTime > 1 || spawn.spawning.name.includes('shard')) return
+    if (spawn.spawning.remainingTime > 1) return
 
     const offset = offsetsByDirection[spawn.spawning.directions[0]]
     const coord = {
