@@ -998,19 +998,18 @@ const roomAdditions = {
                 this._usedUpgradeCoords.add(creep.memory.PC)
             }
 
-            if (this.controllerLink)
-                this._usedUpgradeCoords.add(packCoord(this.controllerLink.pos))
+            if (this.controllerLink) this._usedUpgradeCoords.add(packCoord(this.controllerLink.pos))
 
             // If a source container / link is nearby block the pos
 
             for (const container of this.sourceContainers) {
-                this._usedUpgradePositions.add(packPos(container.pos))
+                this._usedUpgradeCoords.add(packCoord(container.pos))
             }
             for (const links of this.sourceLinks) {
-                this._usedUpgradePositions.add(packPos(links.pos))
+                this._usedUpgradeCoords.add(packCoord(links.pos))
             }
 
-            if (this.controllerLink) this._usedUpgradePositions.add(packPos(this.controllerLink.pos))
+            if (this.controllerLink) this._usedUpgradeCoords.add(packCoord(this.controllerLink.pos))
 
             /*
             for (const packedCoord of this._usedUpgradeCoords) {
