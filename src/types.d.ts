@@ -728,13 +728,13 @@ declare global {
             limit: number
         }
 
-        heapUsage: number
         gcl: ControllerLevel
 
         gpl: ControllerLevel
         rooms: { [roomName: string]: Partial<RoomCommuneStats> }
         constructionSiteCount: number
         CPUUsers: CpuUsers
+        heap: HeapStatistics
     }
 
     type StatsRoomTypes = 'commune' | 'remote'
@@ -2393,7 +2393,7 @@ declare global {
              */
             claim(requestName: string, communeName?: string): string
 
-            deleteClaimRequests(): string
+            deleteClaimRequests(requestName?: string): string
 
             /**
              * Responds, or if needed, creates, an attack request for a specified room, by a specified room
@@ -2416,8 +2416,6 @@ declare global {
             allyCreepRequest(requestName: string, communeName?: string): string
 
             deleteBasePlans(roomName?: string): string
-
-            usedHeap(): string
         }
     }
 

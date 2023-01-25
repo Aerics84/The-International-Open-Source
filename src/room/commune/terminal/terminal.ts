@@ -49,6 +49,7 @@ export class TerminalManager {
         const { terminal } = this.communeManager.room
         if (!terminal) return
         if (!terminal.RCLActionable) return
+        if (this.communeManager.room.enemyCreeps.length > 0) return
 
         this.createTerminalRequests()
     }
@@ -278,6 +279,7 @@ export class TerminalManager {
 
         for (const resourceTarget of terminalResourceTargets) {
             if (resourceTarget.conditions && !resourceTarget.conditions(this.communeManager)) continue
+            if (resourceTarget.resource === RESOURCE_ENERGY) continue
 
             let min = terminal.store.getCapacity() * resourceTarget.min
 
