@@ -1009,8 +1009,6 @@ const roomAdditions = {
                 this._usedUpgradeCoords.add(packCoord(links.pos))
             }
 
-            if (this.controllerLink) this._usedUpgradeCoords.add(packCoord(this.controllerLink.pos))
-
             /*
             for (const packedCoord of this._usedUpgradeCoords) {
 

@@ -18,7 +18,6 @@ export class ContainerManager {
         this.runFastFillerContainers()
         this.runControllerContainer()
         this.runControllerLink()
-        this.runControllerLink()
         this.runMineralContainer()
     }
 

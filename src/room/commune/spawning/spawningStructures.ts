@@ -92,8 +92,7 @@ export class SpawningStructuresManager {
                         bgColor: customColors.red,
                     },
                 )
-
-                continue
+                break
             }
 
             // We're trying to build a creep larger than this room can spawn

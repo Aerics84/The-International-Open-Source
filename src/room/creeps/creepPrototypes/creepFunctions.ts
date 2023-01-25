@@ -193,7 +193,7 @@ Creep.prototype.findUpgradePos = function () {
     for (const pos of room.upgradePositions) {
         // Construct the packedPos using pos
 
-        const packedPos = packPos(pos)
+        const packedPos = packCoord(pos)
 
         // Iterate if the pos is used
 
@@ -1091,7 +1091,7 @@ Creep.prototype.findQuadBulldozeTargets = function (goalPos) {
 }
 
 Creep.prototype.manageSpawning = function (spawn: StructureSpawn) {
-    if (spawn.spawning.remainingTime > 1) return
+    if (spawn.spawning.remainingTime > 1 || spawn.spawning.name.includes('shard')) return
 
     const offset = offsetsByDirection[spawn.spawning.directions[0]]
     const coord = {
@@ -1471,7 +1471,7 @@ Creep.prototype.findRoomLogisticRequestAmount = function (request) {
 Creep.prototype.runRoomLogisticsRequestAdvanced = function (args) {
     const request = this.findRoomLogisticsRequest(args)
     if (!request) return RESULT_FAIL
-    
+
     const target = findObjectWithID(request.TID)
 
     if (getRangeOfCoords(target.pos, this.pos) > 1) {
