@@ -133,16 +133,11 @@ export class RemotesManager {
 
             // If the remote is assumed to be reserved by an enemy or to be an invader core or the cpu usage is over 95%
 
-            if (
-                remoteMemory.data[RemoteData.enemyReserved] ||
-                remoteMemory.data[RemoteData.invaderCore] ||
-                Memory.stats.cpu.usage / Game.cpu.limit > 0.95
-            ) {
+            if (remoteMemory.data[RemoteData.enemyReserved] || remoteMemory.data[RemoteData.invaderCore]) {
                 remoteMemory.data[RemoteData.remoteSourceHarvester0] = 0
                 remoteMemory.data[RemoteData.remoteSourceHarvester1] = 0
                 remoteMemory.data[RemoteData.remoteHauler0] = 0
                 remoteMemory.data[RemoteData.remoteHauler1] = 0
-                remoteMemory.data[RemoteData.remoteReserver] = 0
             }
         }
     }
