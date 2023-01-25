@@ -94,6 +94,8 @@ export class RemoteHauler extends Creep {
     }
 
     removeRemote?() {
+        if (this.store.getUsedCapacity() > 0 || this.commune.name !== this.room.name) return
+
         if (!this.dying && this.memory.RN && Memory.rooms[this.memory.RN].data) {
             Memory.rooms[this.memory.RN].data[RemoteData[`remoteHauler${this.memory.SI}`]] += this.parts.carry
         }

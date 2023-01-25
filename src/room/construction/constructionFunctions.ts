@@ -1,3 +1,4 @@
+import { throws } from 'assert'
 import { impassibleStructureTypes, stamps } from 'international/constants'
 import { customLog, randomTick, unpackNumAsCoord } from 'international/utils'
 
@@ -28,7 +29,7 @@ Room.prototype.communeConstructionPlacement = function () {
 
     // If there are some construction sites
 
-    if (this.find(FIND_MY_CONSTRUCTION_SITES).length >= 2) return
+    if (this.find(FIND_MY_CONSTRUCTION_SITES).length >= 1) return
 
     let placed = 0
 
@@ -80,10 +81,21 @@ Room.prototype.communeConstructionPlacement = function () {
                         if (impassableStructure) continue
                     }
 
+                    // Build links in the correct order (hub, controller, fastFiller, sourceLink)
+
                     if (structureType === STRUCTURE_LINK) {
-                        if (!this.hubLink && stampType !== 'hub') continue
-                        if (!this.controllerLink) continue
-                        if (!this.fastFillerLink && stampType !== 'fastFiller') continue
+                        switch (stampType) {
+                            case 'fastFiller':
+                                if (!this.hubLink || !this.controllerLink) continue
+                                break
+                            case 'hub':
+                                break
+                            case 'sourceLink':
+                                if (!this.hubLink || !this.controllerLink || !this.fastFillerLink) continue
+                                break
+                            default:
+                                continue
+                        }
                     }
 
                     if (this.createConstructionSite(x, y, structureType as BuildableStructureConstant) === OK)
