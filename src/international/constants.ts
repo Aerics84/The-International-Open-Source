@@ -443,17 +443,17 @@ export const stamps: Record<StampTypes, Stamp> = {
                 /* { x: 0, y: 0 }, */
             ],
             /* empty: [
-                 { x: 0, y: 1 },
-                 { x: 0, y: 2 },
-                 { x: 1, y: 2 },
-                 { x: 1, y: 3 },
-                 { x: 2, y: 3 },
-                 { x: 1, y: 0 },
-                 { x: 2, y: 0 },
-                 { x: 2, y: 1 },
-                 { x: 3, y: 1 },
-                 { x: 3, y: 2 },
-             ], */
+                { x: 0, y: 1 },
+                { x: 0, y: 2 },
+                { x: 1, y: 2 },
+                { x: 1, y: 3 },
+                { x: 2, y: 3 },
+                { x: 1, y: 0 },
+                { x: 2, y: 0 },
+                { x: 2, y: 1 },
+                { x: 3, y: 1 },
+                { x: 3, y: 2 },
+            ], */
             lab: [
                 { x: 0, y: 1 },
                 { x: 0, y: 2 },
@@ -1129,16 +1129,7 @@ export const RESULT_NO_ACTION = 3
 export const RESULT_STOP = 4
 
 export const maxRemoteRoomDistance = 5
-export const offsetsByDirection = [,
-    [0, -1],
-    [1, -1],
-    [1, 0],
-    [1, 1],
-    [0, 1],
-    [-1, 1],
-    [-1, 0],
-    [-1, -1],
-]
+export const offsetsByDirection = [, [0, -1], [1, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1]]
 
 export const towerPowers = [PWR_OPERATE_TOWER, PWR_DISRUPT_TOWER]
 

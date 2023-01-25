@@ -71,9 +71,7 @@ global.removeCSites = function (removeInProgress, types?) {
 }
 
 global.destroyStructures = function (roomName, types?) {
-
     if (!roomName) {
-
         if (global.communes.size > 1) return 'Provide a room name'
 
         roomName = Array.from(global.communes)[0]
@@ -192,10 +190,10 @@ global.deleteClaimRequests = function (requestName) {
 
 global.combat = function (requestName, type, opts, communeName) {
     if (!Memory.combatRequests[requestName]) {
-        const request = Memory.combatRequests[requestName] = {
+        const request = (Memory.combatRequests[requestName] = {
             T: type || 'attack',
             data: [0],
-        }
+        })
 
         for (const key in CombatRequestData) request.data[key] = 0
     }
@@ -294,4 +292,9 @@ global.deleteBasePlans = function (roomName) {
     delete room.memory.stampAnchors
 
     return 'Deleted base plans for ' + roomName
+}
+
+global.usedHeap = function () {
+    const usedHeap = Game.cpu.getHeapStatistics().total_heap_size / Game.cpu.getHeapStatistics().heap_size_limit
+    return (usedHeap * 100).toFixed(2) + '%'
 }

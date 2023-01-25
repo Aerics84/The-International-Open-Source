@@ -206,8 +206,6 @@ export class CommuneManager {
         this.remotesManager.run()
         this.haulerNeedManager.run()
 
-        this.room.roomManager.containerManager.runCommune()
-        this.room.roomManager.droppedResourceManager.runCommune()
         this.spawningStructuresManager.createRoomLogisticsRequests()
         this.storingStructuresManager.run()
         this.room.factoryManager()
@@ -231,7 +229,6 @@ export class CommuneManager {
     }
 
     private test() {
-
         customLog('room name', JSON.stringify(makeRoomCoord(this.room.name)))
 
         return
