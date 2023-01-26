@@ -37,7 +37,8 @@ export function constructionManager(room: Room) {
             return
         }
 
-        if (!controllerContainer) room.createConstructionSite(centerUpgradePos, STRUCTURE_CONTAINER)
+        if (!controllerContainer && room.spawningStructures.length > 0)
+            room.createConstructionSite(centerUpgradePos, STRUCTURE_CONTAINER)
     }
 
     room.clearOtherStructures()

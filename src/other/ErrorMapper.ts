@@ -1,5 +1,4 @@
 /* eslint-disable */
-import { Constants } from 'discord.js'
 import { SourceMapConsumer } from 'source-map'
 import ErrorExporter from './ErrorExporter'
 import { settings } from '../international/settings'

@@ -98,6 +98,10 @@ Room.prototype.communeConstructionPlacement = function () {
                         }
                     }
 
+                    // Build first a spawn
+
+                    if (this.spawningStructures.length === 0 && structureType !== STRUCTURE_SPAWN) continue
+
                     if (this.createConstructionSite(x, y, structureType as BuildableStructureConstant) === OK)
                         placed += 1
                 }
