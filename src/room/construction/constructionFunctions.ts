@@ -29,7 +29,12 @@ Room.prototype.communeConstructionPlacement = function () {
 
     // If there are some construction sites
 
-    if (this.find(FIND_MY_CONSTRUCTION_SITES).length >= 1) return
+    const cs = this.find(FIND_MY_CONSTRUCTION_SITES)
+    if (
+        cs.length >= 1 &&
+        (this.spawningStructures.length > 0 || cs.filter(s => s.structureType === STRUCTURE_SPAWN).length > 0)
+    )
+        return
 
     let placed = 0
 
@@ -101,6 +106,14 @@ Room.prototype.communeConstructionPlacement = function () {
                     // Build first a spawn
 
                     if (this.spawningStructures.length === 0 && structureType !== STRUCTURE_SPAWN) continue
+
+                    // Don't build labs or a factory before rcl 8
+
+                    if (
+                        this.controller.level < 8 &&
+                        (structureType === STRUCTURE_LAB || structureType === STRUCTURE_FACTORY)
+                    )
+                        continue
 
                     if (this.createConstructionSite(x, y, structureType as BuildableStructureConstant) === OK)
                         placed += 1

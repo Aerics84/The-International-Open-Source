@@ -136,8 +136,7 @@ export class RemotesManager {
             if (remoteMemory.data[RemoteData.enemyReserved] || remoteMemory.data[RemoteData.invaderCore]) {
                 remoteMemory.data[RemoteData.remoteSourceHarvester0] = 0
                 remoteMemory.data[RemoteData.remoteSourceHarvester1] = 0
-                remoteMemory.data[RemoteData.remoteHauler0] = 0
-                remoteMemory.data[RemoteData.remoteHauler1] = 0
+                remoteMemory.data[RemoteData.remoteReserver] = 0
             }
         }
     }

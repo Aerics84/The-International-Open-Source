@@ -537,15 +537,15 @@ export class RoomVisualsManager {
         const headers: any[] = [
             'energy',
             'minEnergy',
-            'minRampartHits',
-            'estimatedIncome',
+            'minRampHits',
+            'income',
             'CHarvest',
             'RHarvest',
             'upgrade',
             'build',
             'repairOther',
             'barricadeRepair',
-            'towerInferiority',
+            'towerInf',
             'spawn',
         ]
 
@@ -553,10 +553,12 @@ export class RoomVisualsManager {
 
         const data: any[][] = [
             [
-                this.roomManager.room.resourcesInStoringStructures.energy,
-                this.roomManager.room.communeManager.minStoredEnergy,
+                this.roomManager.room.resourcesInStoringStructures.energy
+                    ? this.roomManager.room.resourcesInStoringStructures.energy
+                    : '0',
+                this.roomManager.room.communeManager.minStoredEnergy.toFixed(2),
                 this.roomManager.room.communeManager.minRampartHits,
-                this.roomManager.room.estimateIncome(),
+                this.roomManager.room.estimateIncome().toFixed(2),
                 roomStats.eih.toFixed(2),
                 roomStats.reih.toFixed(2),
                 roomStats.eou.toFixed(2),
