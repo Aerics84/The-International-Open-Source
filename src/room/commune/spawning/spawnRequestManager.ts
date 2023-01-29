@@ -847,7 +847,7 @@ Room.prototype.spawnRequester = function () {
 
                         // Limit partsMultiplier at the range with a multiplier
 
-                        maxPartsMultiplier += findLinkThroughput(range, this.estimatedSourceIncome[i]) * 0.5
+                        maxPartsMultiplier += findLinkThroughput(range, this.estimatedSourceIncome[i]) * 0.7
                     }
 
                     partsMultiplier = Math.min(partsMultiplier, maxPartsMultiplier)
