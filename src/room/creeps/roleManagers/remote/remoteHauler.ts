@@ -149,7 +149,6 @@ export class RemoteHauler extends Creep {
 
             this.message += this.commune.name
 
-            this.message = 'X'
             this.createMoveRequestByPath(
                 {
                     origin: this.pos,

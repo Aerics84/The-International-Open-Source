@@ -99,6 +99,10 @@ export interface Settings {
      * The public segment number (0-100) that you and your allies are using
      */
     simpleAlliesSegment: number
+    /**
+     * Wether or not to send errors, if set up, to the error storer
+     */
+    errorExporting: boolean
 }
 
 export const settings: Settings = {
@@ -134,4 +138,5 @@ export const settings: Settings = {
     logging: false,
     creepSay: false,
     simpleAlliesSegment: 90,
+    errorExporting: false
 }

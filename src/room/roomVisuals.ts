@@ -553,9 +553,7 @@ export class RoomVisualsManager {
 
         const data: any[][] = [
             [
-                this.roomManager.room.resourcesInStoringStructures.energy
-                    ? this.roomManager.room.resourcesInStoringStructures.energy
-                    : '0',
+                this.roomManager.room.resourcesInStoringStructures.energy || 0,
                 this.roomManager.room.communeManager.minStoredEnergy.toFixed(2),
                 this.roomManager.room.communeManager.minRampartHits,
                 this.roomManager.room.estimateIncome().toFixed(2),

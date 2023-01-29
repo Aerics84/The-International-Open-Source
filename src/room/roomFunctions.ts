@@ -108,7 +108,7 @@ Room.prototype.advancedFindPath = function (opts: PathOpts): RoomPosition[] {
                     if (roomName === goal.pos.roomName) return 1
                     return Infinity
                 }
-
+                console.log(roomName)
                 if (opts.avoidAbandonedRemotes && roomMemory.T === 'remote' && roomMemory.data[RemoteData.abandon])
                     return Infinity
 
@@ -2390,6 +2390,29 @@ Room.prototype.findStructureAtXY = function (x, y, structureType) {
         if (structure.structureType !== structureType) continue
 
         return structure
+    }
+
+    return false
+}
+
+Room.prototype.findStructureInsideRect = function (x1, y1, x2, y2, condition) {
+    let structureID: Id<Structure>
+
+    for (let x = x1; x <= x2; x += 1) {
+        for (let y = y1; y <= y2; y += 1) {
+            // Iterate if the pos doesn't map onto a room
+
+            if (x < 0 || x >= roomDimensions || y < 0 || y >= roomDimensions) continue
+
+            const structureIDs = this.structureCoords.get(packXYAsCoord(x, y))
+            if (!structureIDs) continue
+
+            structureID = structureIDs.find(structureID => {
+                return condition(findObjectWithID(structureID))
+            })
+
+            if (structureID) return findObjectWithID(structureID)
+        }
     }
 
     return false
