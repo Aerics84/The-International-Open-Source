@@ -51,8 +51,6 @@ export class RemoteHauler extends Creep {
         if (remoteMemory.T !== 'remote') return false
         if (remoteMemory.CN !== this.commune.name) return false
         if (remoteMemory.data[RemoteData.abandon]) return false
-        if (!randomTick(50) && remoteMemory.data[RemoteData[`remoteHauler${this.memory.SI}`]] + this.parts.carry < 0)
-            return false
 
         return true
     }
@@ -62,7 +60,7 @@ export class RemoteHauler extends Creep {
      */
     findRemote?() {
         if (this.hasValidRemote()) return true
-        if (!this.removeRemote()) return true
+        this.removeRemote()
 
         for (const remoteInfo of this.commune.remoteSourceIndexesByEfficacy) {
             const splitRemoteInfo = remoteInfo.split(' ')
@@ -91,15 +89,20 @@ export class RemoteHauler extends Creep {
         if (this.dying) return
 
         Memory.rooms[remoteName].data[RemoteData[`remoteHauler${this.memory.SI}`]] -= this.parts.carry
+
+        console.log(this.name + ' ' + this.room.name + ' assign remote room ' + this.memory.RN)
     }
 
     removeRemote?() {
+        if (!this.memory.RN) return false
         if (this.store.getUsedCapacity() > 0) return false
         if (this.commune.name !== this.room.name) return false
 
         if (!this.dying && this.memory.RN && Memory.rooms[this.memory.RN].data) {
             Memory.rooms[this.memory.RN].data[RemoteData[`remoteHauler${this.memory.SI}`]] += this.parts.carry
         }
+
+        console.log(this.name + ' ' + this.room.name + ' remove remote room ' + this.memory.RN)
 
         delete this.memory.RN
         delete this.memory.SI

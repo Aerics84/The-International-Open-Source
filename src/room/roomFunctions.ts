@@ -108,7 +108,7 @@ Room.prototype.advancedFindPath = function (opts: PathOpts): RoomPosition[] {
                     if (roomName === goal.pos.roomName) return 1
                     return Infinity
                 }
-                console.log(roomName)
+
                 if (opts.avoidAbandonedRemotes && roomMemory.T === 'remote' && roomMemory.data[RemoteData.abandon])
                     return Infinity
 

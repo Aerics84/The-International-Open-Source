@@ -65,7 +65,6 @@ export class RemoteHarvester extends Creep {
         if (remoteMemory.T !== 'remote') return false
         if (remoteMemory.CN !== this.commune.name) return false
         if (remoteMemory.data[RemoteData.abandon]) return false
-        if (!randomTick(50) && remoteMemory.data[RemoteData[`remoteSourceHarvester${this.memory.SI}`]] < 0) return false
 
         return true
     }
@@ -107,11 +106,12 @@ export class RemoteHarvester extends Creep {
     }
 
     removeRemote?() {
+        if (!this.memory.RN) return false
+        if (this.commune.name !== this.room.name) return false
+
         if (!this.dying && this.memory.RN && Memory.rooms[this.memory.RN].data) {
             Memory.rooms[this.memory.RN].data[RemoteData[`remoteSourceHarvester${this.memory.SI}`]] += this.parts.work
         }
-
-        if (this.commune.name !== this.room.name) return false
 
         delete this.memory.RN
         delete this.memory.SI
