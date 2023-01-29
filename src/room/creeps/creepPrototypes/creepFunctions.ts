@@ -218,14 +218,12 @@ Creep.prototype.advancedUpgradeController = function () {
     let controllerStructure: StructureLink | StructureContainer | undefined = room.controllerContainer
 
     const controllerLink = room.controllerLink
-    // console.log('structure', controllerStructure, this.name)
     if (!controllerStructure && controllerLink && controllerLink.RCLActionable) controllerStructure = controllerLink
 
     // If there is a controllerContainer
 
     if (controllerStructure) {
         const upgradePos = this.findUpgradePos()
-        // console.log('pos', upgradePos, this.name)
         if (!upgradePos) return false
 
         if (getRangeOfCoords(this.pos, upgradePos) > 0) {
@@ -1215,9 +1213,7 @@ Creep.prototype.findRoomLogisticsRequest = function (args) {
             bestRequest = request
         }
     }
-    /*
-    customLog('FINDING REQ', bestRequest + ', ' + Array.from(types), { superPosition: 1 })
- */
+
     let creepRequest: CreepRoomLogisticsRequest | 0
 
     if (!bestRequest) {
@@ -1513,7 +1509,6 @@ Creep.prototype.runRoomLogisticsRequestAdvanced = function (args) {
     const request = this.findRoomLogisticsRequest(args)
     if (!request) return RESULT_FAIL
 
-    /* customLog('REQUEST RESPONSE', request.T, { superPosition: 1 }) */
     const target = findObjectWithID(request.TID)
 
     if (getRangeOfCoords(target.pos, this.pos) > 1) {
@@ -1526,11 +1521,6 @@ Creep.prototype.runRoomLogisticsRequestAdvanced = function (args) {
         return RESULT_ACTION
     }
 
-    /*     customLog(
-        'DOING REQUEST',
-        request.T + ', ' + request.A + ', ' + this.store.getCapacity(request.RT) + ', ' + this.name,
-        { superPosition: 1 },
-    ) */
     // Pickup type
 
     if (target instanceof Resource) {
@@ -1604,21 +1594,12 @@ Creep.prototype.runRoomLogisticsRequest = function () {
         return RESULT_ACTION
     }
 
-    /*     customLog(
-        'DOING REQUEST',
-        request.T + ', ' + request.A + ', ' + this.store.getCapacity(request.RT) + ', ' + this.name,
-        { superPosition: 1 },
-    ) */
     // Pickup type
 
     if (target instanceof Resource) {
         this.pickup(target)
-        customLog('PRE END AMOUNT', this.nextStore.energy, { superPosition: 1 })
         this.nextStore[request.RT] += request.A
         target.nextAmount -= request.A
-        customLog('END AMOUNT', request.A + ', ' + this.nextStore.energy + ', ' + this.usedNextStore, {
-            superPosition: 1,
-        })
         this.memory.RLRs.splice(0, 1)
         return RESULT_SUCCESS
     }
@@ -1648,10 +1629,8 @@ Creep.prototype.runRoomLogisticsRequest = function () {
     }
 
     if (this.withdraw(target, request.RT, request.A) !== OK) return RESULT_FAIL
-    customLog('PRE END AMOUNT', this.nextStore.energy, { superPosition: 1 })
     this.nextStore[request.RT] += request.A
     target.nextStore[request.RT] -= request.A
-    customLog('END AMOUNT', request.A + ', ' + this.nextStore.energy + ', ' + this.usedNextStore, { superPosition: 1 })
     this.memory.RLRs.splice(0, 1)
     return RESULT_SUCCESS
 }

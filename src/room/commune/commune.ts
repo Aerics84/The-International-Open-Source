@@ -229,7 +229,6 @@ export class CommuneManager {
     }
 
     private test() {
-
         customLog('room name', JSON.stringify(makeRoomCoord(this.room.name)))
 
         return
@@ -393,7 +392,7 @@ export class CommuneManager {
         const level = this.room.controller.level
 
         return Math.min(
-            Math.floor(Math.pow((level - 3) * 50, 2.5) + this.room.memory.AT * 5 * Math.pow(level, 2)),
+            Math.floor(Math.pow((level - 3) * 50, 2.75) + this.room.memory.AT * 5 * Math.pow(level, 2)),
             RAMPART_HITS_MAX[level],
         )
     }

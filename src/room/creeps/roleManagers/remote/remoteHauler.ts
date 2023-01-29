@@ -51,6 +51,8 @@ export class RemoteHauler extends Creep {
         if (remoteMemory.T !== 'remote') return false
         if (remoteMemory.CN !== this.commune.name) return false
         if (remoteMemory.data[RemoteData.abandon]) return false
+        if (!randomTick(50) && remoteMemory.data[RemoteData[`remoteHauler${this.memory.SI}`]] + this.parts.carry < 0)
+            return false
 
         return true
     }
@@ -60,6 +62,7 @@ export class RemoteHauler extends Creep {
      */
     findRemote?() {
         if (this.hasValidRemote()) return true
+        if (!this.removeRemote()) return true
 
         for (const remoteInfo of this.commune.remoteSourceIndexesByEfficacy) {
             const splitRemoteInfo = remoteInfo.split(' ')
@@ -69,6 +72,9 @@ export class RemoteHauler extends Creep {
 
             // If there is no need
 
+            if (remoteMemory.T !== 'remote') continue
+            if (remoteMemory.CN !== this.commune.name) continue
+            if (remoteMemory.data[RemoteData.abandon]) continue
             if (remoteMemory.data[RemoteData[`remoteHauler${sourceIndex}`]] <= 0) continue
 
             this.assignRemote(remoteName, sourceIndex)
@@ -88,39 +94,21 @@ export class RemoteHauler extends Creep {
     }
 
     removeRemote?() {
-        if (!this.dying && Memory.rooms[this.memory.RN].data) {
+        if (this.store.getUsedCapacity() > 0) return false
+        if (this.commune.name !== this.room.name) return false
+
+        if (!this.dying && this.memory.RN && Memory.rooms[this.memory.RN].data) {
             Memory.rooms[this.memory.RN].data[RemoteData[`remoteHauler${this.memory.SI}`]] += this.parts.carry
         }
 
         delete this.memory.RN
         delete this.memory.SI
+        delete this.memory.PC
+        delete this.memory.P
+        delete this.memory.GP
+
+        return true
     }
-
-    /*
-    updateRemote?() {
-        if (this.memory.RN) {
-
-            return true
-        }
-
-        const remoteNamesByEfficacy = this.commune.remoteNamesBySourceEfficacy
-
-        let roomMemory
-
-        for (const roomName of remoteNamesByEfficacy) {
-            roomMemory = Memory.rooms[roomName]
-
-            if (roomMemory.needs[RemoteData.remoteHauler] <= 0) continue
-
-            this.memory.RN = roomName
-            roomMemory.needs[RemoteData.remoteHauler] -= this.parts.carry
-
-            return true
-        }
-
-        return false
-    }
- */
 
     getResources?() {
         // Try to find a remote
@@ -281,7 +269,6 @@ export class RemoteHauler extends Creep {
             types: new Set(['withdraw', 'pickup']),
             conditions: request => {
                 if (request.resourceType !== RESOURCE_ENERGY) return false
-
                 // If the target is near the hauler
 
                 const targetPos = findObjectWithID(request.targetID).pos
@@ -312,6 +299,7 @@ export class RemoteHauler extends Creep {
             this.message += this.memory.RN
 
             const sourcePos = unpackPosList(Memory.rooms[this.memory.RN].SP[this.memory.SI])[0]
+            const si = this.memory.SI ? this.memory.SI : 0
 
             this.createMoveRequestByPath(
                 {
@@ -332,7 +320,7 @@ export class RemoteHauler extends Creep {
                     },
                 },
                 {
-                    packedPath: reverseCoordList(Memory.rooms[this.memory.RN].SPs[this.memory.SI]),
+                    packedPath: reverseCoordList(Memory.rooms[this.memory.RN].SPs[si]),
                     remoteName: this.memory.RN,
                     loose: true,
                 },
@@ -405,7 +393,7 @@ export class RemoteHauler extends Creep {
         delete this.memory.P
         delete creepAtPos.memory.P
 
-        this.getResources()
+        //this.getResources()
 
         const remoteHauler = creepAtPos as RemoteHauler
         remoteHauler.deliverResources()
@@ -474,12 +462,12 @@ export class RemoteHauler extends Creep {
 
         const moveCoord = this.moveRequest ? unpackCoord(this.moveRequest) : unpackPosList(this.memory.P)[0]
 
-        if (this.pos.x === moveCoord.x || this.pos.y === moveCoord.y) {
+        if (moveCoord && (this.pos.x === moveCoord.x || this.pos.y === moveCoord.y)) {
             this.relayCardinal(moveCoord)
             return
         }
 
-        this.relayDiagonal(moveCoord)
+        if (moveCoord) this.relayDiagonal(moveCoord)
     }
 
     constructor(creepID: Id<Creep>) {
@@ -498,7 +486,7 @@ export class RemoteHauler extends Creep {
                 returnTripTime = Memory.rooms[this.memory.RN].SPs[this.memory.SI].length * 1.1
         }
 
-        if (this.needsResources() && this.ticksToLive > returnTripTime) {
+        if (this.hasValidRemote() && this.needsResources() && this.ticksToLive > returnTripTime) {
             this.getResources()
             return
         }

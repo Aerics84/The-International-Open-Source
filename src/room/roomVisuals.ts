@@ -537,15 +537,15 @@ export class RoomVisualsManager {
         const headers: any[] = [
             'energy',
             'minEnergy',
-            'minRampartHits',
-            'estimatedIncome',
+            'minRampHits',
+            'income',
             'CHarvest',
             'RHarvest',
             'upgrade',
             'build',
             'repairOther',
             'barricadeRepair',
-            'towerInferiority',
+            'towerInf',
             'spawn',
         ]
 
@@ -554,9 +554,9 @@ export class RoomVisualsManager {
         const data: any[][] = [
             [
                 this.roomManager.room.resourcesInStoringStructures.energy || 0,
-                this.roomManager.room.communeManager.minStoredEnergy,
+                this.roomManager.room.communeManager.minStoredEnergy.toFixed(2),
                 this.roomManager.room.communeManager.minRampartHits,
-                this.roomManager.room.estimateIncome(),
+                this.roomManager.room.estimateIncome().toFixed(2),
                 roomStats.eih.toFixed(2),
                 roomStats.reih.toFixed(2),
                 roomStats.eou.toFixed(2),
@@ -564,7 +564,7 @@ export class RoomVisualsManager {
                 roomStats.eoro.toFixed(2),
                 roomStats.eorwr.toFixed(2),
                 this.roomManager.room.towerInferiority || 'false',
-                roomStats.su.toFixed(2) + '%',
+                (roomStats.su * 100).toFixed(2) + '%',
             ],
         ]
 
@@ -601,7 +601,16 @@ export class RoomVisualsManager {
     requestDataVisuals(y: number) {}
 
     private remoteDataVisuals(y: number) {
-        const headers: any[] = ['remote', 'sourceIndex', 'efficacy', 'harvester', 'hauler', 'reserver', 'abandoned']
+        const headers: any[] = [
+            'remote',
+            'sourceIndex',
+            'efficacy',
+            'harvester',
+            'hauler',
+            'reserver',
+            'dismantler',
+            'abandoned',
+        ]
         const data: any[][] = []
 
         for (const remoteInfo of this.roomManager.room.remoteSourceIndexesByEfficacy) {
@@ -619,6 +628,7 @@ export class RoomVisualsManager {
             row.push(remoteData[RemoteData[`remoteSourceHarvester${sourceIndex}`]])
             row.push(remoteData[RemoteData[`remoteHauler${sourceIndex}`]])
             row.push(remoteData[RemoteData.remoteReserver])
+            row.push(remoteData[RemoteData.remoteDismantler])
             row.push(remoteData[RemoteData.abandon])
 
             data.push(row)

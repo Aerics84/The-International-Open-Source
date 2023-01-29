@@ -94,7 +94,11 @@ class TickConfig {
     }
 
     private configClaimRequests() {
-        let reservedGCL = Game.gcl.level - global.communes.size
+        // If their are alrady over 90 cunstruction sites stop adding new claim requests
+
+        if (Memory.constructionSites.length > 80) return
+
+        let reservedGCL = Game.gcl.level - global.communes.size - 2
 
         // Subtract the number of claimRequests with responders
 
@@ -151,7 +155,7 @@ class TickConfig {
             }
 
             const communeName = findClosestRoomName(roomName, communesForResponding)
-            if (!communeName) break
+            if (!communeName) continue
 
             // Run a more simple and less expensive check, then a more complex and expensive to confirm. If the check fails, abandon the room for some time
 

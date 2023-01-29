@@ -1,3 +1,4 @@
+import { throws } from 'assert'
 import { impassibleStructureTypes, stamps } from 'international/constants'
 import { customLog, randomTick, unpackNumAsCoord } from 'international/utils'
 
@@ -28,7 +29,12 @@ Room.prototype.communeConstructionPlacement = function () {
 
     // If there are some construction sites
 
-    if (this.find(FIND_MY_CONSTRUCTION_SITES).length >= 2) return
+    const cs = this.find(FIND_MY_CONSTRUCTION_SITES)
+    if (
+        cs.length >= 1 &&
+        (this.spawningStructures.length > 0 || cs.filter(s => s.structureType === STRUCTURE_SPAWN).length > 0)
+    )
+        return
 
     let placed = 0
 
@@ -79,6 +85,35 @@ Room.prototype.communeConstructionPlacement = function () {
                         )
                         if (impassableStructure) continue
                     }
+
+                    // Build links in the correct order (hub, controller, fastFiller, sourceLink)
+
+                    if (structureType === STRUCTURE_LINK) {
+                        switch (stampType) {
+                            case 'fastFiller':
+                                if (!this.hubLink || !this.controllerLink) continue
+                                break
+                            case 'hub':
+                                break
+                            case 'sourceLink':
+                                if (!this.hubLink || !this.controllerLink || !this.fastFillerLink) continue
+                                break
+                            default:
+                                continue
+                        }
+                    }
+
+                    // Build first a spawn
+
+                    if (this.spawningStructures.length === 0 && structureType !== STRUCTURE_SPAWN) continue
+
+                    // Don't build labs or a factory before rcl 8
+
+                    if (
+                        this.controller.level < 8 &&
+                        (structureType === STRUCTURE_LAB || structureType === STRUCTURE_FACTORY)
+                    )
+                        continue
 
                     if (this.createConstructionSite(x, y, structureType as BuildableStructureConstant) === OK)
                         placed += 1

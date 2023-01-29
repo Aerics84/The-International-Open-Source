@@ -269,6 +269,7 @@ export class SpawningStructuresManager {
         for (const structure of this.communeManager.room.spawningStructures) {
             this.communeManager.room.createRoomLogisticsRequest({
                 target: structure,
+                onlyFull: true,
                 type: 'transfer',
                 priority: 3,
             })
