@@ -266,7 +266,8 @@ export class SpawningStructuresManager {
     }
 
     createRoomLogisticsRequests() {
-        for (const structure of this.communeManager.room.spawningStructures) {
+        for (const structure of this.communeManager.room.spawningStructuresByNeed) {
+
             this.communeManager.room.createRoomLogisticsRequest({
                 target: structure,
                 onlyFull: true,
