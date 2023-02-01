@@ -1,4 +1,4 @@
-import { customColors } from 'international/constants'
+import { controllerDowngradeUpgraderNeed, customColors } from 'international/constants'
 import { customLog, scalePriority } from 'international/utils'
 import { RoomManager } from './room'
 
@@ -47,7 +47,7 @@ export class ContainerManager {
                 maxAmount: container.reserveStore.energy * 0.5,
                 onlyFull: true,
                 type: 'offer',
-                priority: scalePriority(container.store.getCapacity(), container.reserveStore.energy, 20, true),
+                priority: scalePriority(container.store.getCapacity(), container.reserveStore.energy, 10, true),
             })
         }
     }

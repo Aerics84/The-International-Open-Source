@@ -1,16 +1,20 @@
 // eslint-disable
+import { allStructureTypes } from 'international/constants'
 import Impl from './utf15'
 const coordDepths = [6, 6] // max = [64,64]
 const coord_Codec = new Impl.Codec({ array: 1, depth: coordDepths })
 
 const posDepths = [2, 7, 7, 6, 6] // max = [4,128,128,64,64]
 const pos_Codec = new Impl.Codec({ array: 1, depth: posDepths })
+
+const planCoordDepths = [5, 4] // max = [32,16]
+const planCoord_codec = new Impl.Codec({ depth: planCoordDepths, array: 1 })
 /**
  * screeps-packrat
  * ---------------
  * Lightning-fast and memory-efficient serialization of Screeps IDs, Coords, and RoomPositions
  * Code written by Muon as part of Overmind Screeps AI
- * Modified by Carson Burke
+ * Modified by Carson Burke and Pieter Brandsen
  *
  * Feel free to adapt as desired
  * Package repository: https://github.com/bencbartlett/screeps-packrat
@@ -409,4 +413,49 @@ export function unpackPosList(chars: string) {
         //    posList.push(unpackPos(chars.substr(i, 2)))
     }
     return posList
+}
+
+/**
+ * Pack a planned cord for base building
+ */
+export function packPlanValues(structureType: StructureConstant, minRCL: number) {
+    return planCoord_codec.encode([allStructureTypes.indexOf(structureType), minRCL])
+}
+
+/**
+ * Pack a planned cord for base building
+ */
+export function packPlanCoord(coord: PlanCoord) {
+    return planCoord_codec.encode([allStructureTypes.indexOf(coord.structureType), coord.minRCL])
+}
+
+/**
+ * Packs a list of planned coords for base building
+ */
+export function packPlanCoordList(coordList: PlanCoord[]) {
+    let strArr = []
+    const maxLength = coordList.length
+    for (let i = 0; i < maxLength; i++) {
+        strArr.push(packPlanCoord(coordList[i]))
+    }
+    return strArr
+}
+
+/**
+ * Unpack a planned cord for base building
+ */
+export function unpackPlanCoord(chars: string) {
+    const coord = planCoord_codec.decode(chars) as [number, number]
+    return { structureType: allStructureTypes[coord[0]], minRCL: coord[1] }
+}
+
+/**
+ * Unpacks a list of planned coords for base building
+ */
+export function unpackPlanCoordList(chars: string[]): PlanCoord[] {
+    const coordList: PlanCoord[] = []
+    for (let i = 0; i < chars.length; i += 1) {
+        coordList.push(unpackPlanCoord(chars[i]))
+    }
+    return coordList
 }

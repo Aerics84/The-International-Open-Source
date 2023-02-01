@@ -50,7 +50,7 @@ export class RemoteHauler extends Creep {
         if (!this.memory.RN) return
         if (this.dying) return
 
-        Memory.rooms[this.memory.RN].data[RemoteData[`remoteHauler${this.memory.SI}`]] -= this.parts.carry
+        Memory.rooms[this.memory.RN].data[RemoteData[`remoteHauler${this.memory.SI as 0 | 1}`]] -= this.parts.carry
     }
 
     hasValidRemote?() {
@@ -95,14 +95,16 @@ export class RemoteHauler extends Creep {
         this.memory.RN = remoteName
         this.memory.SI = sourceIndex
 
-        console.log(this.name + ' ' + this.room.name + ' assign remote room ' + this.memory.RN)
+        if (this.dying) return
+
+        Memory.rooms[remoteName].data[RemoteData[`remoteHauler${this.memory.SI as 0 | 1}`]] -= this.parts.carry
     }
 
     removeRemote?() {
         if (!this.memory.RN && !this.memory.SI) return true
 
         if (!this.dying && this.memory.RN && Memory.rooms[this.memory.RN].data) {
-            Memory.rooms[this.memory.RN].data[RemoteData[`remoteHauler${this.memory.SI}`]] += this.parts.carry
+            Memory.rooms[this.memory.RN].data[RemoteData[`remoteHauler${this.memory.SI  as 0 | 1}`]] += this.parts.carry
         }
 
         console.log(this.name + ' ' + this.room.name + ' remove remote room ' + this.memory.RN)
@@ -337,7 +339,7 @@ export class RemoteHauler extends Creep {
     relayCoord?(coord: Coord) {
         if (Memory.roomVisuals) this.room.visual.circle(coord.x, coord.y, { fill: customColors.lightBlue })
 
-        const creepAtPosName = this.room.creepPositions.get(packCoord(coord))
+        const creepAtPosName = this.room.creepPositions[packCoord(coord)]
         if (!creepAtPosName) return false
 
         const creepAtPos = Game.creeps[creepAtPosName]

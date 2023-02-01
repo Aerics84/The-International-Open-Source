@@ -616,7 +616,7 @@ Creep.prototype.findOptimalSourceIndex = function () {
 
             // If there are still creeps needed to harvest a source under the creepThreshold
 
-            if (Math.min(creepThreshold, room.sourcePositions[index].length) - room.creepsOfSourceAmount[index] > 0) {
+            if (Math.min(creepThreshold, room.sourcePositions[index].length) - room.creepsOfSource[index].length > 0) {
                 this.memory.SI = index
                 return true
             }
@@ -696,6 +696,7 @@ Creep.prototype.needsResources = function () {
 }
 
 Creep.prototype.hasNonEnergyResource = function () {
+
     return !!Object.keys(this.nextStore).find(resourceType => resourceType !== RESOURCE_ENERGY)
 }
 
@@ -1202,7 +1203,7 @@ Creep.prototype.findRoomLogisticsRequest = function (args) {
 
             // Default conditions
 
-            if (!this.canAcceptRoomLogisticsRequest(request.type, request.ID.toString())) continue
+            if (!this.canAcceptRoomLogisticsRequest(request.type, request.ID)) continue
 
             const targetPos = findObjectWithID(request.targetID).pos
             const score = request.priority + getRangeOfCoords(targetPos, this.pos) / 100
@@ -1415,12 +1416,10 @@ Creep.prototype.canAcceptRoomLogisticsRequest = function (requestType, requestID
                 )
             }
 
-            if (storingStructure) {
-                request.delivery = storingStructure.id
-                return true
-            }
+            if (!storingStructure) return false
 
-            return false
+            request.delivery = storingStructure.id
+            return true
         }
 
         if (request.onlyFull) {

@@ -47,7 +47,7 @@ export class RemoteHarvester extends Creep {
 
         // Reduce remote need
 
-        Memory.rooms[this.memory.RN].data[RemoteData[`remoteSourceHarvester${this.memory.SI}`]] -= this.parts.work
+        Memory.rooms[this.memory.RN].data[RemoteData[`remoteSourceHarvester${this.memory.SI as 0 | 1}`]] -= this.parts.work
 
         const commune = this.commune
 
@@ -87,7 +87,7 @@ export class RemoteHarvester extends Creep {
             if (remoteMemory.T !== 'remote') continue
             if (remoteMemory.CN !== this.commune.name) continue
             if (remoteMemory.data[RemoteData.abandon]) continue
-            if (remoteMemory.data[RemoteData[`remoteSourceHarvester${sourceIndex}`]] <= 0) continue
+            if (remoteMemory.data[RemoteData[`remoteSourceHarvester${this.memory.SI as 0 | 1}`]] <= 0) continue
 
             this.assignRemote(remoteName, sourceIndex)
             return true
@@ -102,7 +102,9 @@ export class RemoteHarvester extends Creep {
 
         if (this.dying) return
 
-        Memory.rooms[remoteName].data[RemoteData[`remoteSourceHarvester${this.memory.SI}`]] -= this.parts.work
+        const needs = Memory.rooms[remoteName].data
+
+        needs[RemoteData[`remoteSourceHarvester${this.memory.SI as 0 | 1}`]] -= this.parts.work
     }
 
     removeRemote?() {
@@ -110,7 +112,7 @@ export class RemoteHarvester extends Creep {
         if (this.commune.name !== this.room.name) return false
 
         if (!this.dying && this.memory.RN && Memory.rooms[this.memory.RN].data) {
-            Memory.rooms[this.memory.RN].data[RemoteData[`remoteSourceHarvester${this.memory.SI}`]] += this.parts.work
+            needs[RemoteData[`remoteSourceHarvester${this.memory.SI as 0 | 1}`]] += this.parts.work
         }
 
         delete this.memory.RN

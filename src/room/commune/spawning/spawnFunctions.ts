@@ -44,7 +44,7 @@ Room.prototype.findMaxCostPerCreep = function (maxCostPerCreep) {
     // If there are no sourceHarvesters or haulers
 
     if (
-        this.myCreeps.source1Harvester.length + (this.myCreeps.source2Harvester?.length || 0) === 0 ||
+        this.myCreeps.sourceHarvester.length === 0 ||
         this.myCreeps.hauler.length === 0
     )
         // Inform the smaller of the following
@@ -359,7 +359,10 @@ Room.prototype.spawnRequestByGroup = function (opts) {
             }
 
             tier += 1
-            for (const part of addedParts) bodyPartCounts[part] += 1
+            for (const part of addedParts) {
+
+                bodyPartCounts[part] += 1
+            }
         }
 
         // Create a spawnRequest using previously constructed information

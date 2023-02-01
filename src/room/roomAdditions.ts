@@ -60,10 +60,10 @@ const roomAdditions = {
             this._sources = []
 
             if (this.memory.SIDs) {
-                for (const index in this.memory.SIDs) {
-                    const source = findObjectWithID(this.memory.SIDs[index])
+                for (let i = 0; i < this.memory.SIDs.length; i++) {
+                    const source = findObjectWithID(this.memory.SIDs[i])
 
-                    source.index = parseInt(index)
+                    source.index = i
                     this._sources.push(source)
                 }
 
@@ -74,10 +74,10 @@ const roomAdditions = {
 
             const sources = this.find(FIND_SOURCES)
 
-            for (const index in sources) {
-                const source = sources[index]
+            for (const i in sources) {
+                const source = sources[i]
 
-                source.index = parseInt(index)
+                source.index = parseInt(i)
 
                 this.memory.SIDs.push(source.id)
                 this._sources.push(source)
@@ -433,7 +433,9 @@ const roomAdditions = {
 
             if (!this.anchor) return []
 
-            return (this._spawningStructures = [...this.structures.spawn, ...this.structures.extension])
+            this._spawningStructures = [...this.structures.spawn, ...this.structures.extension].filter(structure => structure.RCLActionable)
+
+            return this._spawningStructures
         },
     },
     spawningStructuresByPriority: {
@@ -690,33 +692,24 @@ const roomAdditions = {
 
             this._usedSourceCoords = []
 
-            for (const i in this.sources) this._usedSourceCoords.push(new Set())
+            for (const i in this.sources) {
+                this._usedSourceCoords.push(new Set())
 
-            let harvesterNames
-            if (this.memory.T === 'commune') {
-                harvesterNames = this.myCreeps.source1Harvester
-                if (this.sources.length >= 2) harvesterNames = harvesterNames.concat(this.myCreeps.source2Harvester)
-                harvesterNames = harvesterNames.concat(this.myCreeps.vanguard)
-            } else {
-                harvesterNames = this.myCreeps.remoteSourceHarvester0
-                if (this.sources.length >= 2)
-                    harvesterNames = harvesterNames.concat(this.myCreeps.remoteSourceHarvester1)
-            }
+                // Record used source coords
 
-            for (const creepName of harvesterNames) {
-                // Get the creep using its name
+                for (const creepName of this.creepsOfSource[i]) {
+                    const creep = Game.creeps[creepName]
 
-                const creep = Game.creeps[creepName]
+                    // If the creep is dying, iterate
 
-                // If the creep is dying, iterate
+                    if (creep.dying) continue
+                    if (creep.memory.SI === undefined) continue
+                    if (!creep.memory.PC) continue
 
-                if (creep.dying) continue
-                if (creep.memory.SI === undefined) continue
-                if (!creep.memory.PC) continue
+                    // If the creep has a packedHarvestPos, record it in usedHarvestPositions
 
-                // If the creep has a packedHarvestPos, record it in usedHarvestPositions
-
-                this._usedSourceCoords[creep.memory.SI].add(creep.memory.PC)
+                    this._usedSourceCoords[creep.memory.SI].add(creep.memory.PC)
+                }
             }
 
             return this._usedSourceCoords
@@ -2154,6 +2147,7 @@ const roomAdditions = {
 
             for (const structure of storingStructures) {
                 if (!structure) continue
+                if (!structure.RCLActionable) continue
 
                 for (const key in structure.store) {
                     const resourceType = key as ResourceConstant

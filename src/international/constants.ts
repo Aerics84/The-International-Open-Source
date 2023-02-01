@@ -44,13 +44,12 @@ export const roomTypes: Record<RoomTypes, Set<keyof RoomMemory>> = {
     intersection: new Set(['portalsTo']),
 }
 
-export const stagnantRoomTypes: Set<Partial<RoomTypes>> = new Set(['keeper', 'keeperCenter', 'highway', 'intersection'])
+export const constantRoomTypes: Set<Partial<RoomTypes>> = new Set(['keeper', 'keeperCenter', 'highway', 'intersection'])
 
 export const roomTypesUsedForStats = ['commune', 'remote']
 
 export const creepRoles: CreepRoles[] = [
-    'source1Harvester',
-    'source2Harvester',
+    'sourceHarvester',
     'hauler',
     'requestHauler',
     'controllerUpgrader',
@@ -103,8 +102,7 @@ export enum TrafficPriorities {
     scout,
     hubHauler,
     fastFiller,
-    source1Harvester,
-    source2Harvester,
+    sourceHarvester,
     mineralHarvester,
     remoteSourceHarvester0,
     remoteSourceHarvester1,
@@ -733,6 +731,10 @@ export enum RemoteData {
     abandon,
     onlyInvader,
     disableCachedPaths,
+    /**
+     * Wether or not we are
+     */
+    active
 }
 
 export enum ClaimRequestData {
@@ -1172,3 +1174,63 @@ export const partsByPriorityPartType: { [key in PartsByPriority]: BodyPartConsta
 }
 
 export const rangedMassAttackMultiplierByRange = [1, 1, 0.4, 0.1]
+
+export enum RoomStatNamesEnum {
+    ControllerLevel = 'cl',
+    EnergyInputHarvest = 'eih',
+    EnergyInputBought = 'eib',
+    EnergyOutputUpgrade = 'eou',
+    EnergyOutputRepairOther = 'eoro',
+    EnergyOutputRepairWallOrRampart = 'eorwr',
+    EnergyOutputBuild = 'eob',
+    EnergyOutputSold = 'eos',
+    EnergyOutputSpawn = 'eosp',
+    EnergyOutputPower = 'eop',
+    MineralsHarvested = 'mh',
+    EnergyStored = 'es',
+    BatteriesStoredTimes10 = 'bes',
+    CreepCount = 'cc',
+    TotalCreepCount = 'tcc',
+    PowerCreepCount = 'pcc',
+    SpawnUsagePercentage = 'su',
+    AllyCreepRequestManangerCPUUsage = 'acrmcu',
+    ClaimRequestManagerCPUUsage = 'clrmcu',
+    TowerManagerCPUUsage = 'tmcu',
+    SpawnManagerCPUUsage = 'smcu',
+    CombatRequestManagerCPUUsage = 'cormcu',
+    DefenceManagerCPUUsage = 'dmcu',
+    SpawnRequestManagerCPUUsage = 'srmcu',
+    RoomCPUUsage = 'rocu',
+    RoomVisualsManagerCPUUsage = 'rvmcu',
+    ConstructionManagerCPUUsage = 'cmcu',
+    RoleManagerCPUUsage = 'rolmcu',
+    RoleManagerPerCreepCPUUsage = 'rolmpccu',
+    EndTickCreepManagerCPUUsage = 'etcmcu',
+    PowerRoleManagerCPUUsage = 'prmcu',
+    PowerRoleManagerPerCreepCPUUsage = 'prmpccu',
+
+    GameTime = 'gt',
+    RemoteCount = 'rc',
+    RemoteEnergyStored = 'res',
+    RemoteEnergyInputHarvest = 'reih',
+    RemoteEnergyOutputRepairOther = 'reoro',
+    RemoteEnergyOutputBuild = 'reob',
+    RemoteRoomCPUUsage = 'rrocu',
+    RemoteRoomVisualsManagerCPUUsage = 'rrvmcu',
+    RemoteConstructionManagerCPUUsage = 'rcmcu',
+    RemoteRoleManagerCPUUsage = 'rrolmcu',
+    RemoteRoleManagerPerCreepCPUUsage = 'rrolmpccu',
+    RemoteEndTickCreepManagerCPUUsage = 'retcmcu',
+    RemotePowerRoleManangerCPUUsage = 'rprmcu',
+    RemotePowerRoleManagerPerCreepCPUUsage = 'rprmpccu',
+}
+
+export enum InternationalStatNamesEnum {
+    InternationalManagerCPUUsage = 'imcu',
+    CreepOrganizerCPUUsage = 'cocu',
+    MapVisualsManangerCPUUsage = 'mvmcu',
+    PowerCreepOrganizerCPUUsage = 'pccu',
+    TickConfigCPUUsage = 'tccu',
+    RoomManagerCPUUsage = 'roomcu',
+    StatsManagerCPUUsage = 'smcu',
+}

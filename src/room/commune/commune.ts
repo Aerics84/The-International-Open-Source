@@ -8,7 +8,10 @@ import {
     getRange,
     getRangeOfCoords,
     makeRoomCoord,
+    packPlanCoord,
+    randomIntRange,
     unpackNumAsCoord,
+    unpackPlanCoord,
 } from 'international/utils'
 import { TerminalManager } from './terminal/terminal'
 import './spawning/spawningStructures'
@@ -229,6 +232,16 @@ export class CommuneManager {
     }
 
     private test() {
+
+        const array = new Array(2500)
+
+        for (let i = 0; i < array.length; i++) {
+
+            array[i] = packPlanCoord(STRUCTURE_SPAWN, 1)
+        }
+
+
+
         return
 
         let CPUUsed = Game.cpu.getUsed()
@@ -368,13 +381,12 @@ export class CommuneManager {
 
         this._minStoredEnergy = Math.floor(Math.pow(this.room.controller.level * 6000, 1.05) + this.room.memory.AT * 20)
 
-        // Take away some minimum based on how close we are to the next RCL
+        // If there is a next RCL, Take away some minimum based on how close we are to the next RCL
 
-        if (this.room.controller.level < 8)
-            this._minStoredEnergy -= Math.pow(
-                (this.room.controller.progress / this.room.controller.progressTotal) * 20,
-                3.35,
-            )
+        const RClCost = this.room.controller.progressTotal
+        if (RClCost) {
+            this._minStoredEnergy -= Math.pow((Math.min(this.room.controller.progress, RClCost) / RClCost) * 20, 3.35)
+        }
         return this._minStoredEnergy
     }
 

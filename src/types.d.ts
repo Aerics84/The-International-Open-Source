@@ -114,8 +114,7 @@ declare global {
     type CoordMap = Uint8Array
 
     type CreepRoles =
-        | 'source1Harvester'
-        | 'source2Harvester'
+        | 'sourceHarvester'
         | 'hauler'
         | 'requestHauler'
         | 'controllerUpgrader'
@@ -142,6 +141,7 @@ declare global {
         | 'antifaHealer'
         | 'antifaDismantler'
         | 'antifaDowngrader'
+
     interface TerminalRequest {
         ID: string
         /**
@@ -151,6 +151,11 @@ declare global {
         amount: number
         resource: ResourceConstant
         roomName: string
+    }
+
+    interface PlanCoord {
+        structureType: StructureConstant
+        minRCL: number
     }
 
     type QuadTransformTypes = 'none' | 'rotateLeft' | 'rotateRight' | 'tradeHorizontal' | 'tradeVertical'
@@ -656,7 +661,7 @@ declare global {
          */
         prmcu: number
         /**
-         * Role Manager Per Creep CPU Usage
+         * Power Role Manager Per Creep CPU Usage
          */
         prmpccu: number
     }
@@ -870,9 +875,9 @@ declare global {
 
     interface Room {
         /**
-         * The amount of creeps with a task of harvesting sources in the room
+         * The names of creeps harvesting each source
          */
-        creepsOfSourceAmount: number[]
+        creepsOfSource: string[][]
 
         estimatedSourceIncome: number[]
 
@@ -939,17 +944,17 @@ declare global {
         /**
          * A matrix with indexes of packed coords and values of creep names
          */
-        creepPositions: Map<string, string>
+        creepPositions: { [packedCoord: string]: string }
 
         /**
          * A matrix with indexes of packed coords and values of creep names
          */
-        powerCreepPositions: Map<string, string>
+        powerCreepPositions: { [packedCoord: string]: string }
 
         /**
          * A matrix with indexes of packed coords and values of creep names
          */
-        moveRequests: Map<string, string[]>
+        moveRequests: { [packedCoord: string]: string[] }
 
         roomManager: RoomManager
 
@@ -1002,10 +1007,9 @@ declare global {
 
         scoutByRoomName(): RoomTypes | false
 
-        scoutReservedRemote(): RoomTypes | false
-
-        scoutUnreservedRemote(): RoomTypes | false
-
+        scoutRemote(scoutingRoom?: Room): RoomTypes | false
+        scoutEnemyReservedRemote(): RoomTypes | false
+        scoutEnemyUnreservedRemote(): RoomTypes | false
         scoutMyRemote(scoutingRoom: Room): RoomTypes | false
 
         scoutEnemyRoom(): RoomTypes | false
@@ -1217,7 +1221,13 @@ declare global {
         findStructureAtCoord<T extends StructureConstant>(coord: Coord, structureType: T): Structure | false
         findStructureAtXY<T extends StructureConstant>(x: number, y: number, structureType: T): Structure | false
 
-        findStructureInsideRect(x1: number, y1: number, x2: number, y2: number, condition: (structure: Structure) => boolean): Structure | false
+        findStructureInsideRect(
+            x1: number,
+            y1: number,
+            x2: number,
+            y2: number,
+            condition: (structure: Structure) => boolean,
+        ): Structure | false
         // Room Getters
 
         readonly global: Partial<RoomGlobal>
@@ -2003,7 +2013,7 @@ declare global {
         /**
          * The Source Index of recorded sources in the room
          */
-        SI: 0 | 1
+        SI: number
 
         /**
          * The creep's packed coord for a designated target
