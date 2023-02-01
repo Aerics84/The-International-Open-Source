@@ -14,10 +14,10 @@ export class ContainerManager {
     }
 
     runCommune() {
-
         this.runSourceContainers()
         this.runFastFillerContainers()
         this.runControllerContainer()
+        this.runControllerLink()
         this.runMineralContainer()
     }
 
@@ -69,13 +69,24 @@ export class ContainerManager {
 
         if (container.usedReserveStore > container.store.getCapacity() * 0.75) return
 
-        let priority = this.roomManager.room.controller.ticksToDowngrade < controllerDowngradeUpgraderNeed ? 0 : 50
-        priority += scalePriority(container.store.getCapacity(), container.reserveStore.energy, 20)
+        const priority = this.roomManager.room.controller.ticksToDowngrade < 2500 ? -0.1 : 50
 
         this.roomManager.room.createRoomLogisticsRequest({
             target: container,
             type: 'transfer',
-            priority,
+            priority: priority + scalePriority(container.store.getCapacity(), container.reserveStore.energy, 20),
+        })
+    }
+
+    private runControllerLink() {
+        const link = this.roomManager.room.controllerLink
+        if (!link || this.roomManager.room.creepsFromRoom['hubHauler'].length > 0) return
+        if (link.reserveStore.energy > link.store.getCapacity(RESOURCE_ENERGY) * 0.8) return
+
+        this.roomManager.room.createRoomLogisticsRequest({
+            target: link,
+            type: 'transfer',
+            priority: 12.5 + scalePriority(link.store.getCapacity(RESOURCE_ENERGY), link.reserveStore.energy, 20),
         })
     }
 
@@ -90,7 +101,7 @@ export class ContainerManager {
             resourceType,
             type: 'withdraw',
             onlyFull: true,
-            priority: 20 + scalePriority(container.store.getCapacity(), container.reserveStore[resourceType], 20, true),
+            priority: 5 + scalePriority(container.store.getCapacity(), container.reserveStore[resourceType], 20, true),
         })
     }
 }

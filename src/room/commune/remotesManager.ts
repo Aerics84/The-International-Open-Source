@@ -52,7 +52,7 @@ export class RemotesManager {
 
             // Every x ticks ensure enemies haven't blocked off too much of the path
 
-            if (randomTick(100)) {
+            if (randomTick(50)) {
                 const safeDistance = advancedFindDistance(room.name, remoteName, {
                     typeWeights: remoteTypeWeights,
                     avoidAbandonedRemotes: true,
@@ -131,13 +131,12 @@ export class RemotesManager {
                 remoteMemory.data[RemoteData.remoteDismantler] = Math.min(remote.dismantleTargets.length, 1)
             }
 
-            // If the remote is assumed to be reserved by an enemy or to be an invader core
+            // If the remote is assumed to be reserved by an enemy or to be an invader core or the cpu usage is over 95%
 
             if (remoteMemory.data[RemoteData.enemyReserved] || remoteMemory.data[RemoteData.invaderCore]) {
                 remoteMemory.data[RemoteData.remoteSourceHarvester0] = 0
                 remoteMemory.data[RemoteData.remoteSourceHarvester1] = 0
-                remoteMemory.data[RemoteData.remoteHauler0] = 0
-                remoteMemory.data[RemoteData.remoteHauler1] = 0
+                remoteMemory.data[RemoteData.remoteReserver] = 0
             }
         }
     }
@@ -148,7 +147,7 @@ export class RemotesManager {
         for (const remoteName of this.communeManager.room.memory.remotes) {
             const remoteMemory = Memory.rooms[remoteName]
 
-            if (remoteMemory.data[RemoteData.abandon]) continue
+            if (remoteMemory.data && remoteMemory.data[RemoteData.abandon]) continue
 
             const remote = Game.rooms[remoteName]
             const isReserved =

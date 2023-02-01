@@ -91,6 +91,7 @@ const roomAdditions = {
             if (this._sourcesByEfficacy) return this._sourcesByEfficacy
 
             this._sourcesByEfficacy = [].concat(this.sources)
+
             return this._sourcesByEfficacy.sort((a, b) => {
                 return this.sourcePaths[a.index].length - this.sourcePaths[b.index].length
             })
@@ -566,9 +567,13 @@ const roomAdditions = {
             if (this.controller && (this.controller.my || this.controller.reservation))
                 return this._combatStructureTargets
 
-            if (this.controller.owner && Memory.allyPlayers.includes(this.controller.owner.username))
+            if (this.controller && this.controller.owner && Memory.allyPlayers.includes(this.controller.owner.username))
                 return this._combatStructureTargets
-            if (this.controller.reservation && Memory.allyPlayers.includes(this.controller.reservation.username))
+            if (
+                this.controller &&
+                this.controller.reservation &&
+                Memory.allyPlayers.includes(this.controller.reservation.username)
+            )
                 return this._combatStructureTargets
 
             this._combatStructureTargets = this._combatStructureTargets.concat(this.structures.spawn)
@@ -1020,6 +1025,16 @@ const roomAdditions = {
             }
 
             if (this.controllerLink) this._usedUpgradeCoords.add(packCoord(this.controllerLink.pos))
+
+            // If a source container / link is nearby block the pos
+
+            for (const container of this.sourceContainers) {
+                this._usedUpgradeCoords.add(packCoord(container.pos))
+            }
+            for (const links of this.sourceLinks) {
+                this._usedUpgradeCoords.add(packCoord(links.pos))
+            }
+
             /*
             for (const packedCoord of this._usedUpgradeCoords) {
 

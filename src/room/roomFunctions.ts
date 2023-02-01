@@ -108,7 +108,7 @@ Room.prototype.advancedFindPath = function (opts: PathOpts): RoomPosition[] {
                     if (roomName === goal.pos.roomName) return 1
                     return Infinity
                 }
-                /* console.log(roomName) */
+
                 if (opts.avoidAbandonedRemotes && roomMemory.T === 'remote' && roomMemory.data[RemoteData.abandon])
                     return Infinity
 
@@ -608,6 +608,92 @@ Room.prototype.scoutEnemyUnreservedRemote = function () {
     return false
 }
 
+Room.prototype.scoutEnemyRoom = function () {
+    const { controller } = this
+    const playerName = controller.owner.username
+    const roomMemory = this.memory
+
+    roomMemory.T = 'enemy'
+
+    let player = Memory.players[playerName]
+    if (!player) {
+        player = Memory.players[playerName] = {
+            data: [0],
+        }
+
+        for (const key in PlayerData) this.memory.data[parseInt(key)] = 0
+    }
+
+    // General
+
+    const level = controller.level
+    roomMemory.level = level
+
+    roomMemory.powerEnabled = controller.isPowerEnabled
+
+    // Offensive threat
+
+    let threat = 0
+
+    threat += Math.pow(level, 2)
+
+    threat += this.structures.spawn.length * 50
+    threat += this.structures.nuker.length * 300
+    threat += Math.pow(this.structures.lab.length * 10000, 0.4)
+
+    threat = Math.floor(threat)
+
+    roomMemory.OS = threat
+    Memory.players[playerName].data[PlayerData.offensiveStrength] = Math.max(
+        threat,
+        player.data[PlayerData.offensiveStrength],
+    )
+
+    // Defensive threat
+
+    threat = 0
+
+    const energy = this.resourcesInStoringStructures.energy
+
+    roomMemory.energy = energy
+    threat += Math.pow(energy, 0.5)
+
+    const ramparts = this.structures.rampart
+    const avgRampartHits = ramparts.reduce((total, rampart) => total + rampart.hits, 0) / ramparts.length
+
+    threat += Math.pow(avgRampartHits, 0.5)
+    threat += this.structures.spawn.length * 100
+    threat += this.structures.tower.length * 300
+    threat += Math.pow(this.structures.extension.length * 400, 0.8)
+
+    const hasTerminal = this.terminal !== undefined
+
+    if (hasTerminal) {
+        threat += 800
+
+        roomMemory.terminal = true
+    }
+
+    threat = Math.floor(threat)
+
+    roomMemory.DS = threat
+    Memory.players[playerName].data[PlayerData.defensiveStrength] = Math.max(
+        threat,
+        player.data[PlayerData.defensiveStrength],
+    )
+
+    // Combat request creation
+
+    this.createAttackCombatRequest({
+        maxTowerDamage: Math.ceil(
+            this.structures.tower.filter(tower => tower.RCLActionable).length * TOWER_POWER_ATTACK * 1.1,
+        ),
+        minDamage: 50,
+    })
+
+    return roomMemory.T
+}
+
 Room.prototype.scoutMyRemote = function (scoutingRoom) {
     if (this.memory.T === 'remote' && !global.communes.has(this.memory.CN)) this.memory.T = 'neutral'
 
@@ -691,7 +777,7 @@ Room.prototype.scoutMyRemote = function (scoutingRoom) {
 
     // If the room isn't already a remote
 
-    if (this.memory.T !== 'remote') {
+    if (this.memory.T !== 'remote' && this.memory.T !== 'commune') {
         this.memory.T = 'remote'
 
         // Assign the room's commune as the scoutingRoom
@@ -2337,8 +2423,7 @@ Room.prototype.createRoomLogisticsRequest = function (args) {
     else args.priority = Math.round(args.priority * 100) / 100
 
     const ID = internationalManager.newTickID()
-    /* this.visual.text(args.priority.toString(), args.target.pos) */
-    /* this.visual.resource(args.resourceType, args.target.pos.x, args.target.pos.y) */
+    this.visual.text(args.priority.toString(), args.target.pos.x, args.target.pos.y)
     return (this.roomLogisticsRequests[args.type][ID] = {
         ID,
         type: args.type,

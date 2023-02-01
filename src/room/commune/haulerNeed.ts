@@ -14,12 +14,11 @@ export class HaulerNeedManager {
             const sourceLink = room.sourceLinks[index]
             if (sourceLink && sourceLink.RCLActionable) continue
 
-            if (room.sourcePaths[index])
+            if (room.sourcePaths[index] && room.estimatedSourceIncome[index])
                 room.haulerNeed += findCarryPartsRequired(
                     room.sourcePaths[index].length + 3,
                     room.estimatedSourceIncome[index],
                 )
-            else console.log(`No source path for ${room.name} source ${index}`)
         }
 
         // There is a viable controllerContainer
@@ -31,7 +30,7 @@ export class HaulerNeedManager {
 
         room.haulerNeed += room.structures.lab.length / 1.5
 
-        /* room.haulerNeed += room.structures.extension.length / 10 */
+        room.haulerNeed += room.structures.extension.length / 10
 
         if ((room.controller.level >= 4 && room.storage) || (room.terminal && room.controller.level >= 6))
             room.haulerNeed += Memory.stats.rooms[room.name].eosp / 50

@@ -272,7 +272,7 @@ export class Scout extends Creep {
                 let roomMemory: Partial<RoomMemory> = Memory.rooms[creep.memory.scT]
                 if (!roomMemory) roomMemory = (Memory.rooms[creep.memory.scT] as Partial<RoomMemory>) = {}
 
-                roomMemory.T = 'neutral'
+                //roomMemory.T = 'neutral'
                 roomMemory.LST = Game.time
 
                 delete creep.memory.scT

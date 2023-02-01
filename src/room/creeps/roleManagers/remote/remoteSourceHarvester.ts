@@ -9,6 +9,7 @@ import {
     scalePriority,
 } from 'international/utils'
 import { packCoord, reverseCoordList, unpackPos, unpackPosList } from 'other/packrat'
+import { creepClasses } from 'room/creeps/creepClasses'
 import { RemoteHauler } from './remoteHauler'
 
 export class RemoteHarvester extends Creep {
@@ -73,25 +74,31 @@ export class RemoteHarvester extends Creep {
      */
     findRemote?() {
         if (this.hasValidRemote()) return true
+        this.removeRemote()
 
         for (const remoteInfo of this.commune.remoteSourceIndexesByEfficacy) {
             const splitRemoteInfo = remoteInfo.split(' ')
             const remoteName = splitRemoteInfo[0]
+            const sourceIndex = parseInt(splitRemoteInfo[1]) as 0 | 1
             const remoteMemory = Memory.rooms[remoteName]
 
             // If there is no need
 
+            if (remoteMemory.T !== 'remote') continue
+            if (remoteMemory.CN !== this.commune.name) continue
+            if (remoteMemory.data[RemoteData.abandon]) continue
             if (remoteMemory.data[RemoteData[`remoteSourceHarvester${this.memory.SI as 0 | 1}`]] <= 0) continue
 
-            this.assignRemote(remoteName)
+            this.assignRemote(remoteName, sourceIndex)
             return true
         }
 
         return false
     }
 
-    assignRemote?(remoteName: string) {
+    assignRemote?(remoteName: string, sourceIndex: 0 | 1) {
         this.memory.RN = remoteName
+        this.memory.SI = sourceIndex
 
         if (this.dying) return
 
@@ -101,14 +108,20 @@ export class RemoteHarvester extends Creep {
     }
 
     removeRemote?() {
-        if (!this.dying) {
-            const needs = Memory.rooms[this.memory.RN].data
+        if (!this.memory.RN) return false
+        if (this.commune.name !== this.room.name) return false
 
+        if (!this.dying && this.memory.RN && Memory.rooms[this.memory.RN].data) {
             needs[RemoteData[`remoteSourceHarvester${this.memory.SI as 0 | 1}`]] += this.parts.work
         }
 
         delete this.memory.RN
+        delete this.memory.SI
         delete this.memory.PC
+        delete this.memory.P
+        delete this.memory.GP
+
+        return true
     }
 
     remoteActions?() {

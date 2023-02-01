@@ -410,6 +410,7 @@ export class LabManager {
                 key as MineralConstant | MineralCompoundConstant,
             )
         }
+
         for (const compound in this.targetCompounds) {
             var amount = Math.max(0, this.targetCompounds[compound as MineralConstant | MineralCompoundConstant]) // this.communeManager.roomai.trading.maxStorageAmount(compound))
             /* console.log('updateDeficits ' + this.communeManager.room.name + ': ' + compound + ', ' + amount) */

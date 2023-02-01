@@ -471,13 +471,14 @@ Room.prototype.spawnRequester = function () {
             if (storage && this.controller.level >= 4) {
                 // If the storage is sufficiently full, provide x amount per y enemy in storage
 
-                if (this.resourcesInStoringStructures.energy < this.communeManager.storedEnergyBuildThreshold)
-                    return false
-
-                partsMultiplier += Math.pow(
-                    this.resourcesInStoringStructures.energy / (15000 + this.controller.level * 1000),
-                    2,
-                )
+                if (this.resourcesInStoringStructures.energy < this.communeManager.storedEnergyBuildThreshold) {
+                    partsMultiplier += estimatedIncome / 5
+                } else {
+                    partsMultiplier += Math.pow(
+                        this.resourcesInStoringStructures.energy / (15000 + this.controller.level * 1000),
+                        2,
+                    )
+                }
             }
 
             // Otherwise if there is no storage
@@ -659,8 +660,28 @@ Room.prototype.spawnRequester = function () {
             if (this.controller.ticksToDowngrade > controllerDowngradeUpgraderNeed && this.towerInferiority)
                 return false
 
-            // If there is a storage
+            // If the controllerContainer have not enough energy in it, don't spawn a new upgrader
 
+            if (this.controllerContainer) {
+                if (
+                    this.controllerContainer.store.getUsedCapacity(RESOURCE_ENERGY) < 1000 &&
+                    this.controller.ticksToDowngrade > controllerDowngradeUpgraderNeed
+                ) {
+                    return false
+                }
+
+                if (
+                    this.controllerContainer.store.getUsedCapacity(RESOURCE_ENERGY) > 1500 &&
+                    this.fastFillerContainerLeft &&
+                    this.fastFillerContainerLeft.store.getUsedCapacity(RESOURCE_ENERGY) > 1000 &&
+                    this.fastFillerContainerRight &&
+                    this.fastFillerContainerRight.store.getUsedCapacity(RESOURCE_ENERGY) > 1000
+                )
+                    partsMultiplier += estimatedIncome
+                else partsMultiplier += estimatedIncome * 0.5
+            }
+
+            // If there is a storage
             if (storage && this.controller.level >= 4) {
                 // If the storage is sufficiently full, provide x amount per y energy in storage
 
@@ -693,7 +714,10 @@ Room.prototype.spawnRequester = function () {
 
                 // If there are transfer links, max out partMultiplier to their ability
 
-                if ((hubLink && hubLink.RCLActionable) || sourceLinks.find(link => link && link.RCLActionable)) {
+                if (
+                    (storage && hubLink && hubLink.RCLActionable) ||
+                    sourceLinks.find(link => link && link.RCLActionable)
+                ) {
                     let maxPartsMultiplier = 0
 
                     if (hubLink && hubLink.RCLActionable) {
@@ -726,7 +750,11 @@ Room.prototype.spawnRequester = function () {
 
             // If there are construction sites of my ownership in the this, set multiplier to 1
 
-            if (this.find(FIND_MY_CONSTRUCTION_SITES).length) partsMultiplier = 0
+            if (this.find(FIND_MY_CONSTRUCTION_SITES).length) {
+                if (!this.controllerContainer && !this.controllerLink) {
+                    partsMultiplier = 0
+                } else partsMultiplier = partsMultiplier * 0.25
+            }
 
             const threshold = 0.05
             role = 'controllerUpgrader'
@@ -1228,7 +1256,7 @@ Room.prototype.spawnRequester = function () {
                 partsMultiplier,
                 minCost: 100,
                 maxCostPerCreep: this.memory.MHC,
-                priority: minRemotePriority,
+                priority: minRemotePriority + 1.5,
                 memoryAdditions: {},
             }
         })(),

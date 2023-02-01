@@ -80,8 +80,8 @@ PowerCreep.prototype.createMoveRequestByPath = Creep.prototype.createMoveRequest
 
     const cachedIndex = pathOpts.packedPath.indexOf(packPos(this.pos))
     if (cachedIndex >= 0 && cachedIndex + 2 !== pathOpts.packedPath.length) {
-        console.log(pathOpts.packedPath.length, unpackPosList(pathOpts.packedPath))
-        console.log(pathOpts.packedPath[cachedIndex], pathOpts.packedPath)
+        //pathOpts.packedPath.length, unpackPosList(pathOpts.packedPath))
+        //console.log(pathOpts.packedPath[cachedIndex], pathOpts.packedPath)
         pathOpts.packedPath = pathOpts.packedPath.slice(cachedIndex)
 
         let path: RoomPosition[]
@@ -89,8 +89,7 @@ PowerCreep.prototype.createMoveRequestByPath = Creep.prototype.createMoveRequest
         // If we have a remote, avoid abandoned remotes
 
         if (pathOpts.remoteName) {
-
-            console.log(pathOpts.packedPath.length, cachedIndex)
+            //console.log(pathOpts.packedPath.length, cachedIndex)
             const roomNames: Set<string> = new Set()
             path = unpackPosList(pathOpts.packedPath)
 
