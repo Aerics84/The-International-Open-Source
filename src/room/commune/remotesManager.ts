@@ -77,6 +77,8 @@ export class RemotesManager {
 
             remoteMemory.data[RemoteData.remoteSourceHarvester0] = 3
             remoteMemory.data[RemoteData.remoteSourceHarvester1] = remoteMemory.SIDs[1] ? 3 : 0
+            remoteMemory.data[RemoteData.remoteHauler0] = 0
+            remoteMemory.data[RemoteData.remoteHauler1] = 0
             remoteMemory.data[RemoteData.remoteReserver] = 1
 
             // Get the remote
@@ -99,27 +101,6 @@ export class RemotesManager {
 
                 if (isReserved && remote.controller.reservation.ticksToEnd >= Math.min(remoteMemory.RE * 5, 2500))
                     remoteMemory.data[RemoteData.remoteReserver] = 0
-            }
-
-            for (let sourceIndex = 0; sourceIndex < remoteMemory.SP.length; sourceIndex += 1) {
-                // Get the income based on the reservation of the this and remoteHarvester need
-                // Multiply remote harvester need by 1.6~ to get 3 to 5 and 6 to 10, converting work part need to income expectation
-
-                const income = Math.max(
-                    (isReserved ? 15 : 10) -
-                        Math.floor(
-                            Math.max(remoteMemory.data[RemoteData[remoteHarvesterRoles[sourceIndex]]], 0) *
-                                minHarvestWorkRatio,
-                        ),
-                    0,
-                )
-
-                // Find the number of carry parts required for the source, and add it to the remoteHauler need
-
-                remoteMemory.data[RemoteData[`remoteHauler${sourceIndex as 0 | 1}`]] = findCarryPartsRequired(
-                    remoteMemory.SPs[sourceIndex].length,
-                    income,
-                )
             }
 
             if (remote) {
@@ -155,15 +136,12 @@ export class RemotesManager {
             if (remoteMemory.data[RemoteData.enemyReserved] || remoteMemory.data[RemoteData.invaderCore]) {
                 remoteMemory.data[RemoteData.remoteSourceHarvester0] = 0
                 remoteMemory.data[RemoteData.remoteSourceHarvester1] = 0
-                remoteMemory.data[RemoteData.remoteHauler0] = 0
-                remoteMemory.data[RemoteData.remoteHauler1] = 0
                 remoteMemory.data[RemoteData.remoteReserver] = 0
             }
         }
     }
 
     public run() {
-        return
         // Loop through the commune's remote names
 
         for (const remoteName of this.communeManager.room.memory.remotes) {
