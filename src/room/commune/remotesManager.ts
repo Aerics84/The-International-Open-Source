@@ -136,6 +136,8 @@ export class RemotesManager {
             if (remoteMemory.data[RemoteData.enemyReserved] || remoteMemory.data[RemoteData.invaderCore]) {
                 remoteMemory.data[RemoteData.remoteSourceHarvester0] = 0
                 remoteMemory.data[RemoteData.remoteSourceHarvester1] = 0
+                remoteMemory.data[RemoteData.remoteHauler0] = 0
+                remoteMemory.data[RemoteData.remoteHauler1] = 0
                 remoteMemory.data[RemoteData.remoteReserver] = 0
             }
         }
@@ -147,7 +149,7 @@ export class RemotesManager {
         for (const remoteName of this.communeManager.room.memory.remotes) {
             const remoteMemory = Memory.rooms[remoteName]
 
-            if (remoteMemory.data && remoteMemory.data[RemoteData.abandon]) continue
+            if (remoteMemory.data[RemoteData.abandon]) continue
 
             const remote = Game.rooms[remoteName]
             const isReserved =

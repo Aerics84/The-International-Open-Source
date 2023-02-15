@@ -148,7 +148,6 @@ PowerCreep.prototype.createMoveRequestByPath = Creep.prototype.createMoveRequest
     let posIndex: number
 
     for (let i = 0; i < path.length; i++) {
-
         const pos = path[i]
         if (!arePositionsEqual(this.pos, pos)) continue
 
@@ -157,13 +156,11 @@ PowerCreep.prototype.createMoveRequestByPath = Creep.prototype.createMoveRequest
     }
 
     if (posIndex !== undefined && posIndex + 1 < path.length) {
-
         path.splice(0, posIndex + 1)
 
         // If we have a remote, avoid abandoned remotes
 
         if (pathOpts.remoteName) {
-
             const roomNames: Set<string> = new Set()
 
             for (const pos of path) {
@@ -388,7 +385,7 @@ PowerCreep.prototype.assignMoveRequest = Creep.prototype.assignMoveRequest = fun
 
     room.moveRequests[packedCoord]
         ? room.moveRequests[packedCoord].push(this.name)
-        : room.moveRequests[packedCoord] = [this.name]
+        : (room.moveRequests[packedCoord] = [this.name])
 }
 
 PowerCreep.prototype.findShovePositions = Creep.prototype.findShovePositions = function (avoidPackedPositions) {
@@ -458,7 +455,13 @@ PowerCreep.prototype.findShovePositions = Creep.prototype.findShovePositions = f
 PowerCreep.prototype.shove = Creep.prototype.shove = function (shoverPos) {
     const { room } = this
 
-    const shovePositions = this.findShovePositions(new Set([packCoord(shoverPos), packCoord(this.pos)]))
+    let shovePositions = null
+    try {
+        shovePositions = this.findShovePositions(new Set([packCoord(shoverPos), packCoord(this.pos)]))
+    } catch (error) {
+        console.log(this.name + ' ' + this.room.name)
+    }
+
     if (!shovePositions.length) return false
 
     let goalPos: RoomPosition

@@ -47,7 +47,8 @@ export class RemoteHarvester extends Creep {
 
         // Reduce remote need
 
-        Memory.rooms[this.memory.RN].data[RemoteData[`remoteSourceHarvester${this.memory.SI as 0 | 1}`]] -= this.parts.work
+        Memory.rooms[this.memory.RN].data[RemoteData[`remoteSourceHarvester${this.memory.SI as 0 | 1}`]] -=
+            this.parts.work
 
         const commune = this.commune
 
@@ -111,9 +112,10 @@ export class RemoteHarvester extends Creep {
         if (!this.memory.RN) return false
         if (this.commune.name !== this.room.name) return false
 
-        if (!this.dying && this.memory.RN && Memory.rooms[this.memory.RN].data) {
+        try {
+            const needs = Memory.rooms[this.memory.RN].data
             needs[RemoteData[`remoteSourceHarvester${this.memory.SI as 0 | 1}`]] += this.parts.work
-        }
+        } catch (error) {}
 
         delete this.memory.RN
         delete this.memory.SI

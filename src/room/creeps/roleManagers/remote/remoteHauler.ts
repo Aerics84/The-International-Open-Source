@@ -47,8 +47,8 @@ export class RemoteHauler extends Creep {
     preTickManager() {
         if (randomTick() && !this.getActiveBodyparts(MOVE)) this.suicide()
 
-        if (!this.memory.RN) return
         if (this.dying) return
+        if (!this.hasValidRemote()) return
 
         Memory.rooms[this.memory.RN].data[RemoteData[`remoteHauler${this.memory.SI as 0 | 1}`]] -= this.parts.carry
     }
@@ -95,16 +95,16 @@ export class RemoteHauler extends Creep {
         this.memory.RN = remoteName
         this.memory.SI = sourceIndex
 
-        if (this.dying) return
+        console.log(this.name + ' ' + this.room.name + ' assign remote room ' + this.memory.RN)
 
-        Memory.rooms[remoteName].data[RemoteData[`remoteHauler${this.memory.SI as 0 | 1}`]] -= this.parts.carry
+        if (this.dying) return
     }
 
     removeRemote?() {
         if (!this.memory.RN && !this.memory.SI) return true
 
         if (!this.dying && this.memory.RN && Memory.rooms[this.memory.RN].data) {
-            Memory.rooms[this.memory.RN].data[RemoteData[`remoteHauler${this.memory.SI  as 0 | 1}`]] += this.parts.carry
+            Memory.rooms[this.memory.RN].data[RemoteData[`remoteHauler${this.memory.SI as 0 | 1}`]] += this.parts.carry
         }
 
         console.log(this.name + ' ' + this.room.name + ' remove remote room ' + this.memory.RN)
@@ -480,12 +480,7 @@ export class RemoteHauler extends Creep {
             } else {
                 this.createMoveRequest({
                     origin: this.pos,
-                    goals: [
-                        {
-                            pos: this.commune.anchor,
-                            range: 25,
-                        },
-                    ],
+                    goals: [{ pos: new RoomPosition(25, 25, this.commune.name), range: 25 }],
                 })
             }
         }

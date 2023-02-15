@@ -69,7 +69,7 @@ export class ContainerManager {
 
         if (container.usedReserveStore > container.store.getCapacity() * 0.75) return
 
-        const priority = this.roomManager.room.controller.ticksToDowngrade < 2500 ? -0.1 : 50
+        const priority = this.roomManager.room.controller.ticksToDowngrade < 2500 ? -0.1 : 15
 
         this.roomManager.room.createRoomLogisticsRequest({
             target: container,
@@ -94,14 +94,21 @@ export class ContainerManager {
         const container = this.roomManager.room.mineralContainer
         if (!container) return
 
-        const resourceType = this.roomManager.room.mineral.mineralType
-
-        this.roomManager.room.createRoomLogisticsRequest({
-            target: container,
-            resourceType,
-            type: 'withdraw',
-            onlyFull: true,
-            priority: 5 + scalePriority(container.store.getCapacity(), container.reserveStore[resourceType], 20, true),
-        })
+        for (const res of Object.keys(container.store)) {
+            this.roomManager.room.createRoomLogisticsRequest({
+                target: container,
+                resourceType: res as ResourceConstant,
+                type: 'withdraw',
+                onlyFull: true,
+                priority:
+                    5 +
+                    scalePriority(
+                        container.store.getCapacity(),
+                        container.reserveStore[res as ResourceConstant],
+                        20,
+                        true,
+                    ),
+            })
+        }
     }
 }

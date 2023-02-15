@@ -37,7 +37,7 @@ export function constructionManager(room: Room) {
             return
         }
 
-        if (!controllerContainer && room.spawningStructures.length > 0 && room.fastFillerContainerLeft)
+        if (!controllerContainer && room.spawningStructures.length > 0 && room.energyCapacityAvailable > 300)
             room.createConstructionSite(centerUpgradePos, STRUCTURE_CONTAINER)
     }
 

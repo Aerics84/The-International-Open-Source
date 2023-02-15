@@ -189,6 +189,7 @@ Room.prototype.spawnRequester = function () {
                     defaultParts: [],
                     extraParts: [CARRY, CARRY, MOVE],
                     partsMultiplier: partsMultiplier / 2,
+                    minCreeps: 2,
                     minCost: 150,
                     maxCostPerCreep: this.memory.MHC,
                     priority,
